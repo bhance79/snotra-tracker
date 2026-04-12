@@ -1,4 +1,5 @@
 export const MUSCLE_COLORS = {
+  // ── Capitalized — used by ROUTINES workout session ───────────────────────
   'Compound Lift': 'bg-zinc-600 text-white',
   'Lats':          'bg-red-500 text-white',
   'Rhomboids':     'bg-green-400 text-black',
@@ -15,6 +16,30 @@ export const MUSCLE_COLORS = {
   'Calves':        'bg-teal-400 text-black',
   'Core':          'bg-violet-400 text-white',
   'Hip Flexors':   'bg-fuchsia-400 text-white',
+  'Erectors':      'bg-stone-400 text-black',
+  'Brachialis':    'bg-emerald-400 text-black',
+  'Hip Abductors': 'bg-sky-500 text-white',
+  'Hip Adductors': 'bg-violet-500 text-white',
+
+  // ── Lowercase — used by exercise library / search view ───────────────────
+  'chest':         'bg-orange-500 text-white',
+  'upper chest':   'bg-orange-300 text-black',
+  'triceps':       'bg-indigo-400 text-white',
+  'front delts':   'bg-purple-400 text-white',
+  'shoulders':     'bg-pink-400 text-white',
+  'traps':         'bg-yellow-300 text-black',
+  'core':          'bg-violet-400 text-white',
+  'biceps':        'bg-cyan-400 text-black',
+  'brachialis':    'bg-emerald-400 text-black',
+  'back':          'bg-red-600 text-white',
+  'lats':          'bg-red-500 text-white',
+  'erectors':      'bg-stone-400 text-black',
+  'glutes':        'bg-rose-400 text-white',
+  'quads':         'bg-lime-400 text-black',
+  'hamstrings':    'bg-amber-400 text-black',
+  'calves':        'bg-teal-400 text-black',
+  'hip abductors': 'bg-sky-500 text-white',
+  'hip adductors': 'bg-violet-500 text-white',
 }
 
 export const ROUTINES = [
@@ -82,13 +107,13 @@ export const ROUTINES = [
     id: 'pull',
     label: 'Pull',
     subtitle: 'Back · Biceps · Rear Delts',
-    exercises: ['Barbell Row', 'Weighted Pull-up', 'Seated Cable Row', 'Face Pull', 'Incline DB Curl', 'Hammer Curl'],
+    exercises: ['Barbell Row', 'Weighted Pull-Up', 'Seated Cable Row', 'Face Pull', 'Incline DB Curl', 'Hammer Curl'],
     sections: [
       {
         title: 'Compound lifts',
         exercises: [
           {
-            name: 'Barbell Row',
+            name: 'Barbell Row (Pendlay or Bent-Over)',
             setsReps: '4 × 5–6',
             progression: 'Add 2.5 kg when top rep hit 2 sessions in a row',
             selected: true,
@@ -140,9 +165,9 @@ export const ROUTINES = [
   },
   {
     id: 'lower-quad',
-    label: 'Lower',
-    subtitle: 'Quad Focus · Hamstrings · Calves',
-    exercises: ['Barbell Back Squat', 'Leg Press', 'Walking Lunge', 'Leg Curl', 'Leg Extension', 'Standing Calf Raise'],
+    label: 'Legs',
+    subtitle: 'Quad Focus · Athletic Stability',
+    exercises: ['Barbell Back Squat', 'Leg Press', 'Bulgarian Split Squat', 'Walking Lunges', 'Leg Extension', 'Hip Abduction', 'Hip Adduction', 'Standing Calf Raise'],
     sections: [
       {
         title: 'Compound lifts',
@@ -167,18 +192,18 @@ export const ROUTINES = [
             muscles: ['Quads', 'Glutes'],
           },
           {
-            name: 'Walking Lunge (dumbbell)',
-            setsReps: '3 × 10 ea.',
+            name: 'Bulgarian Split Squat (dumbbell)',
+            setsReps: '3 × 8 ea.',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Quads', 'Glutes', 'Hip Flexors'],
           },
           {
-            name: 'Leg Curl (machine)',
-            setsReps: '3 × 12',
+            name: 'Walking Lunges (dumbbell)',
+            setsReps: '2–3 × 10 ea.',
             progression: 'Add reps, then weight',
             selected: true,
-            muscles: ['Hamstrings'],
+            muscles: ['Quads', 'Glutes', 'Hip Flexors'],
           },
           {
             name: 'Leg Extension',
@@ -188,8 +213,22 @@ export const ROUTINES = [
             muscles: ['Quads'],
           },
           {
+            name: 'Hip Abduction (machine or cable)',
+            setsReps: '3 × 15',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Glutes', 'Hip Abductors'],
+          },
+          {
+            name: 'Hip Adduction (machine or cable)',
+            setsReps: '3 × 15',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Hip Adductors'],
+          },
+          {
             name: 'Standing Calf Raise',
-            setsReps: '4 × 15',
+            setsReps: '4 × 12–15',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Calves'],
@@ -261,25 +300,18 @@ export const ROUTINES = [
   {
     id: 'lower-hinge',
     label: 'Lower',
-    subtitle: 'Hinge Focus · Glutes · Hamstrings',
-    exercises: ['Conventional Deadlift', 'Romanian Deadlift', 'Bulgarian Split Squat', 'Hip Thrust', 'Nordic Curl', 'Seated Calf Raise'],
+    subtitle: 'Hinge Focus · Glutes · Athletic Power',
+    exercises: ['Romanian Deadlift', 'Hip Thrust', 'Leg Press (High Foot)', 'Bulgarian Split Squat', 'Nordic Curl', 'Single-Leg RDL', 'Cable Hip Abduction', 'Copenhagen Plank', 'Seated Calf Raise'],
     sections: [
       {
         title: 'Compound lifts',
         exercises: [
           {
-            name: 'Conventional Deadlift',
-            setsReps: '4 × 4–5',
-            progression: 'Add 5 kg when top rep hit 2 sessions in a row',
-            selected: true,
-            muscles: ['Compound Lift', 'Hamstrings', 'Glutes', 'Lats', 'Traps'],
-          },
-          {
             name: 'Romanian Deadlift',
-            setsReps: '3 × 8–10',
+            setsReps: '4 × 6–8',
             progression: 'Add 2.5 kg when top rep hit 2 sessions in a row',
             selected: true,
-            muscles: ['Hamstrings', 'Glutes'],
+            muscles: ['Compound Lift', 'Hamstrings', 'Glutes', 'Erectors'],
           },
         ],
       },
@@ -287,18 +319,25 @@ export const ROUTINES = [
         title: 'Accessory lifts',
         exercises: [
           {
-            name: 'Bulgarian Split Squat (dumbbell)',
-            setsReps: '3 × 8 ea.',
-            progression: 'Add reps, then weight',
-            selected: true,
-            muscles: ['Quads', 'Glutes', 'Hip Flexors'],
-          },
-          {
             name: 'Hip Thrust (barbell)',
-            setsReps: '3 × 10',
+            setsReps: '3 × 8–10',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Glutes', 'Hamstrings'],
+          },
+          {
+            name: 'Leg Press (high foot placement)',
+            setsReps: '3 × 10–12',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Glutes', 'Hamstrings', 'Quads'],
+          },
+          {
+            name: 'Bulgarian Split Squat (dumbbell)',
+            setsReps: '2–3 × 8 ea.',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Quads', 'Glutes', 'Hip Flexors'],
           },
           {
             name: 'Nordic Curl / Leg Curl',
@@ -308,8 +347,29 @@ export const ROUTINES = [
             muscles: ['Hamstrings'],
           },
           {
+            name: 'Single-Leg RDL (dumbbell)',
+            setsReps: '2–3 × 10 ea.',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Hamstrings', 'Glutes'],
+          },
+          {
+            name: 'Cable Hip Abduction',
+            setsReps: '2–3 × 15',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Glutes', 'Hip Abductors'],
+          },
+          {
+            name: 'Copenhagen Plank',
+            setsReps: '2 × 20–30 sec',
+            progression: 'Add reps, then weight',
+            selected: true,
+            muscles: ['Core', 'Hip Adductors'],
+          },
+          {
             name: 'Seated Calf Raise',
-            setsReps: '3 × 15',
+            setsReps: '3 × 12–15',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Calves'],
