@@ -105,8 +105,137 @@ function RatingWidget({ value, onChange }) {
   )
 }
 
+// ─── Exercise action menu ─────────────────────────────────────────────────────
+function ExerciseMenu({ onEdit, onSwitch, onRemove, onClose }) {
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-t-2xl border-t border-zinc-800 px-4 pt-4 pb-10 flex flex-col gap-2">
+        <button
+          onClick={onEdit}
+          className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
+        >
+          Edit Sets & Reps
+        </button>
+        <button
+          onClick={onSwitch}
+          className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
+        >
+          Switch Exercise
+        </button>
+        <button
+          onClick={onRemove}
+          className="w-full py-4 rounded-xl bg-zinc-800 text-brand-red font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Switch exercise picker ────────────────────────────────────────────────────
+function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose }) {
+  const [query, setQuery] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 100)
+    return () => clearTimeout(t)
+  }, [])
+
+  const currentNames = new Set(currentExercises.map((e) => e.name))
+  const libRef = EXERCISE_LIBRARY.find((e) => e.name === exercise.name)
+  const targetTier = libRef?.tier ?? null
+  const targetMuscles = new Set(exercise.muscles)
+
+  const q = query.trim().toLowerCase()
+
+  const pool = EXERCISE_LIBRARY.filter((ex) => {
+    if (currentNames.has(ex.name) || ex.name === exercise.name) return false
+    const tierMatch = targetTier ? ex.tier === targetTier : true
+    const muscleMatch = ex.muscles.some((m) => targetMuscles.has(m))
+    return tierMatch && muscleMatch
+  })
+
+  const results = q
+    ? pool.filter((ex) =>
+        ex.name.toLowerCase().includes(q) ||
+        ex.muscles.some((m) => m.toLowerCase().includes(q)) ||
+        ex.pattern.toLowerCase().includes(q)
+      )
+    : pool
+
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]">
+        <div className="px-4 pt-4 pb-3 shrink-0">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-white font-semibold text-base">Switch Exercise</span>
+            <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
+          </div>
+          <p className="text-zinc-500 text-xs mb-3">Same tier · overlapping muscles</p>
+          <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className="w-4 h-4 text-zinc-500 shrink-0">
+              <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Filter…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm"
+              style={{ fontSize: '16px' }}
+            />
+            {query ? (
+              <button onClick={() => setQuery('')} className="text-zinc-500 active:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className="w-4 h-4">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            ) : null}
+          </div>
+        </div>
+        <div className="overflow-y-auto pb-8 px-4">
+          {results.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-8">No similar exercises found</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {results.map((ex) => (
+                <button
+                  key={ex.name}
+                  onClick={() => onSwitch(ex)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-zinc-800 active:bg-zinc-700 text-left transition-colors"
+                >
+                  <div className="min-w-0 mr-3">
+                    <div className="text-white text-sm font-semibold truncate">{ex.name}</div>
+                    <div className="text-zinc-500 text-xs mt-0.5">{ex.pattern} · {ex.equipment}</div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 justify-end shrink-0 max-w-[130px]">
+                    {ex.muscles.slice(0, 2).map((m) => (
+                      <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Exercise card (controlled — state lives in parent) ───────────────────────
-function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, dragHandleProps, isDragging }) {
+function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, dragHandleProps, isDragging, onMenu, isEditing, onSetsRepsChange, onEditDone }) {
   const { sets, done, lapStartedAt } = cardState
   const lapTime = useLapClock(lapStartedAt)
 
@@ -162,14 +291,30 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
                   {primaryMuscle}
                 </span>
               )}
-              <button className="text-zinc-500 active:text-white">
+              <button
+                onClick={(e) => { e.stopPropagation(); onMenu() }}
+                className="text-zinc-500 active:text-white p-1 -mr-1"
+              >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                   <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
                 </svg>
               </button>
             </div>
           </div>
-          <p className="text-brand-silver text-sm mt-0.5">{exercise.setsReps}</p>
+          {isEditing ? (
+            <input
+              autoFocus
+              type="text"
+              value={exercise.setsReps}
+              onChange={(e) => onSetsRepsChange(e.target.value)}
+              onBlur={onEditDone}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-zinc-700 text-brand-silver text-sm rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-brand-red w-40 mt-0.5"
+              style={{ fontSize: '16px' }}
+            />
+          ) : (
+            <p className="text-brand-silver text-sm mt-0.5">{exercise.setsReps}</p>
+          )}
           {!isActive && (
             <>
               <div className="flex flex-wrap gap-1.5 mt-2">
@@ -380,6 +525,9 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
   const [activeExercise, setActiveExercise] = useState(0)
   const [showPicker, setShowPicker] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [menuOpenIdx, setMenuOpenIdx] = useState(null)
+  const [editingIdx, setEditingIdx] = useState(null)
+  const [switchingIdx, setSwitchingIdx] = useState(null)
 
   // exercises + per-card state — persists across open/close, resets only on new session
   const [exercises, setExercises] = useState([])
@@ -401,6 +549,25 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
 
   function updateCardState(i, patch) {
     setCardStates((prev) => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
+  }
+
+  function updateSetsReps(i, setsReps) {
+    setExercises((prev) => prev.map((ex, idx) => idx === i ? { ...ex, setsReps } : ex))
+  }
+
+  function removeExercise(i) {
+    setExercises((prev) => prev.filter((_, idx) => idx !== i))
+    setCardStates((prev) => prev.filter((_, idx) => idx !== i))
+    setActiveExercise((a) => (a >= i ? Math.max(0, a - 1) : a))
+    setMenuOpenIdx(null)
+  }
+
+  function switchExercise(i, libEx) {
+    setExercises((prev) => prev.map((ex, idx) =>
+      idx === i ? { name: libEx.name, muscles: libEx.muscles, setsReps: ex.setsReps } : ex
+    ))
+    setSwitchingIdx(null)
+    setMenuOpenIdx(null)
   }
 
   // Sheet slide animation
@@ -550,6 +717,10 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
             onActivate={() => setActiveExercise(activeExercise === i ? null : i)}
             dragHandleProps={makeDragHandleProps(i)}
             isDragging={isBeingDragged}
+            onMenu={() => setMenuOpenIdx(i)}
+            isEditing={editingIdx === i}
+            onSetsRepsChange={(val) => updateSetsReps(i, val)}
+            onEditDone={() => setEditingIdx(null)}
           />
         </div>
       )
@@ -604,6 +775,24 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
               setCardStates((prev) => [...prev, makeCardState(ex)])
             }}
             onClose={() => setShowPicker(false)}
+          />
+        )}
+
+        {menuOpenIdx !== null && (
+          <ExerciseMenu
+            onEdit={() => { setEditingIdx(menuOpenIdx); setMenuOpenIdx(null) }}
+            onSwitch={() => { setSwitchingIdx(menuOpenIdx); setMenuOpenIdx(null) }}
+            onRemove={() => removeExercise(menuOpenIdx)}
+            onClose={() => setMenuOpenIdx(null)}
+          />
+        )}
+
+        {switchingIdx !== null && (
+          <SwitchExercisePicker
+            exercise={exercises[switchingIdx]}
+            currentExercises={exercises}
+            onSwitch={(libEx) => switchExercise(switchingIdx, libEx)}
+            onClose={() => setSwitchingIdx(null)}
           />
         )}
 
