@@ -31,7 +31,7 @@ function exerciseSummary(ex) {
 
 async function loadCustomFont() {
   try {
-    const font = new FontFace('CoveredByYourGrace-Regular', 'url(/fonts/CoveredByYourGrace-Regular.ttf)')
+    const font = new FontFace('PlusJakartaSans', 'url(/fonts/PlusJakartaSans-VariableFont_wght.ttf)')
     await font.load()
     document.fonts.add(font)
   } catch (_) {}
@@ -46,7 +46,8 @@ export async function generateWorkoutImage(workout) {
 
   const W = 500
   const PAD = 44
-  const LINE_H = 32
+  const INDENT = 36
+  const LINE_H = 38
 
   const validExercises = workout.exercises
     .map((ex) => exerciseSummary(ex))
@@ -60,10 +61,10 @@ export async function generateWorkoutImage(workout) {
 
   // Height calculation
   let h = PAD
-  h += 32           // workout title
+  h += 38           // workout title
   h += 10           // gap before exercises
   h += validExercises.length * LINE_H
-  h += 36           // gap before logo
+  h += 6            // gap before logo
   h += logoH
   h += PAD          // bottom padding
 
@@ -76,24 +77,24 @@ export async function generateWorkoutImage(workout) {
 
   // ── Workout title ──────────────────────────────────────────────────────────
   const title = `${workout.routine_label ?? 'Workout'} workout`
-  ctx.textAlign = 'center'
-  ctx.font = '20px "CoveredByYourGrace-Regular", cursive'
+  ctx.textAlign = 'left'
+  ctx.font = '26px "PlusJakartaSans", cursive'
   ctx.fillStyle = 'rgba(255,255,255,1)'
-  ctx.fillText(title, W / 2, y)
-  y += 32
+  ctx.fillText(title, INDENT, y)
+  y += 38
 
   y += 10
 
   // ── Exercise lines ─────────────────────────────────────────────────────────
-  ctx.font = '20px "CoveredByYourGrace-Regular", cursive'
+  ctx.font = '22px "PlusJakartaSans", cursive'
   ctx.fillStyle = 'rgba(255,255,255,0.85)'
 
   for (const line of validExercises) {
-    ctx.fillText(line, W / 2, y)
+    ctx.fillText(line, INDENT, y)
     y += LINE_H
   }
 
-  y += 36
+  y += 6
 
   // ── Logo (bottom center) ───────────────────────────────────────────────────
   if (logo) {
