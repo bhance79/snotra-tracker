@@ -31,7 +31,7 @@ function exerciseSummary(ex) {
 
 async function loadCustomFont() {
   try {
-    const font = new FontFace('Covered By Your Grace', 'url(/fonts/CoveredByYourGrace-Regular.ttf)')
+    const font = new FontFace('CoveredByYourGrace-Regular', 'url(/fonts/CoveredByYourGrace-Regular.ttf)')
     await font.load()
     document.fonts.add(font)
   } catch (_) {}
@@ -77,7 +77,7 @@ export async function generateWorkoutImage(workout) {
   // ── Workout title ──────────────────────────────────────────────────────────
   const title = `${workout.routine_label ?? 'Workout'} workout`
   ctx.textAlign = 'center'
-  ctx.font = '20px 'Covered By Your Grace', cursive'
+  ctx.font = '20px "CoveredByYourGrace-Regular", cursive'
   ctx.fillStyle = 'rgba(255,255,255,1)'
   ctx.fillText(title, W / 2, y)
   y += 32
@@ -85,7 +85,7 @@ export async function generateWorkoutImage(workout) {
   y += 10
 
   // ── Exercise lines ─────────────────────────────────────────────────────────
-  ctx.font = '20px 'Covered By Your Grace', cursive'
+  ctx.font = '20px "CoveredByYourGrace-Regular", cursive'
   ctx.fillStyle = 'rgba(255,255,255,0.85)'
 
   for (const line of validExercises) {
