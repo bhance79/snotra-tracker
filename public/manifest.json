@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/images/snotra-logo.png",
+      "src": "/images/snotra-icon.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
