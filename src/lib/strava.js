@@ -15,7 +15,7 @@ export function connectStrava() {
     `?client_id=${CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
     `&response_type=code` +
-    `&scope=activity:read_all` +
+    `&scope=read,activity:read_all` +
     `&approval_prompt=auto`
   window.location.href = url
 }
@@ -82,12 +82,13 @@ export function getStoredAthlete() {
 
 export async function fetchStravaActivities(perPage = 12) {
   const token = await getAccessToken()
-  if (!token) return null
+  if (!token) return { error: 'no_token' }
   const res = await fetch(
     `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}`,
     { headers: { Authorization: `Bearer ${token}` } }
   )
-  if (!res.ok) return null
+  if (res.status === 401) return { error: 'unauthorized' }
+  if (!res.ok) return { error: `http_${res.status}` }
   return res.json()
 }
 

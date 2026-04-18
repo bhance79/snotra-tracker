@@ -52,9 +52,11 @@ function ActivityCard({ activity }) {
 export default function HomeView() {
   const [user, setUser] = useState(null)
   const [connected, setConnected] = useState(isStravaConnected())
-  const [activities, setActivities] = useState(null) // null = loading
+  const [activities, setActivities] = useState(null)
+  const [activitiesError, setActivitiesError] = useState(null)
   const [athlete, setAthlete] = useState(getStoredAthlete())
   const [callbackError, setCallbackError] = useState(null)
+  const [loadingActivities, setLoadingActivities] = useState(false)
 
   // Handle Supabase user
   useEffect(() => {
@@ -91,11 +93,22 @@ export default function HomeView() {
   // Fetch activities when connected
   useEffect(() => {
     if (!connected) { setActivities(null); return }
-    setActivities(undefined) // loading
-    fetchStravaActivities(12).then((data) => {
-      setActivities(data ?? [])
-    })
+    loadActivities()
   }, [connected])
+
+  function loadActivities() {
+    setLoadingActivities(true)
+    setActivitiesError(null)
+    fetchStravaActivities(12).then((data) => {
+      if (Array.isArray(data)) {
+        setActivities(data)
+      } else {
+        setActivitiesError(data?.error ?? 'unknown')
+        setActivities(null)
+      }
+      setLoadingActivities(false)
+    })
+  }
 
   function handleDisconnect() {
     disconnectStrava()
@@ -161,9 +174,22 @@ export default function HomeView() {
             </div>
 
             {/* Activities */}
-            {activities === undefined ? (
+            {loadingActivities ? (
               <div className="flex justify-center py-12">
                 <div className="w-5 h-5 rounded-full border-2 border-[#FC4C02] border-t-transparent animate-spin" />
+              </div>
+            ) : activitiesError ? (
+              <div className="bg-zinc-900 rounded-2xl px-4 py-6 text-center">
+                <p className="text-zinc-400 text-sm mb-1">Couldn't load activities</p>
+                <p className="text-zinc-600 text-xs mb-4">Error: {activitiesError}</p>
+                <div className="flex gap-2 justify-center">
+                  <button onClick={loadActivities} className="px-4 py-2 rounded-xl bg-zinc-800 text-white text-sm font-medium active:bg-zinc-700">
+                    Retry
+                  </button>
+                  <button onClick={handleDisconnect} className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-400 text-sm active:bg-zinc-700">
+                    Reconnect
+                  </button>
+                </div>
               </div>
             ) : activities?.length === 0 ? (
               <p className="text-zinc-500 text-sm text-center py-8">No recent activities found</p>
