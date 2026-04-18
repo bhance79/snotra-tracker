@@ -110,7 +110,7 @@ export default function RoutinePreviewSheet({ routine, open, onClose }) {
               </h2>
               <div className="flex flex-col gap-3">
                 {section.exercises.map((ex) => (
-                  <div key={ex.name} className={`rounded-2xl px-4 py-4 border ${ex.selected ? 'bg-zinc-800 border-brand-red' : 'bg-zinc-900 border-zinc-800'}`}>
+                  <div key={ex.name} className={`rounded-2xl px-4 py-4 border ${ex.selected ? 'bg-brand-black border-brand-red' : 'bg-brand-black border-white/10'}`}>
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xl font-bold text-white">{ex.name}</span>

@@ -14,7 +14,7 @@ function getDisplayName(user) {
 
 function ActivityCard({ activity }) {
   return (
-    <div className="bg-zinc-900 rounded-2xl px-4 py-3 mb-2">
+    <div className="bg-brand-black rounded-2xl px-4 py-3 mb-2">
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg leading-none">{activityEmoji(activity.sport_type ?? activity.type)}</span>
@@ -139,7 +139,7 @@ export default function HomeView() {
         )}
 
         {!connected ? (
-          <div className="flex flex-col items-center bg-zinc-900 rounded-2xl px-6 py-8">
+          <div className="flex flex-col items-center bg-brand-black rounded-2xl px-6 py-8">
             <div className="w-12 h-12 bg-[#FC4C02] rounded-2xl flex items-center justify-center mb-4">
               <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
                 <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
@@ -179,7 +179,7 @@ export default function HomeView() {
                 <div className="w-5 h-5 rounded-full border-2 border-[#FC4C02] border-t-transparent animate-spin" />
               </div>
             ) : activitiesError ? (
-              <div className="bg-zinc-900 rounded-2xl px-4 py-6 text-center">
+              <div className="bg-brand-black rounded-2xl px-4 py-6 text-center">
                 <p className="text-zinc-400 text-sm mb-1">Couldn't load activities</p>
                 <p className="text-zinc-600 text-xs mb-4">Error: {activitiesError}</p>
                 <div className="flex gap-2 justify-center">

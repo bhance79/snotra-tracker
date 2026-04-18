@@ -58,7 +58,7 @@ function highlight(text, query) {
 
 function ExerciseCard({ exercise, query }) {
   return (
-    <div className="bg-zinc-900 rounded-2xl px-4 py-3 mb-2">
+    <div className="bg-brand-black rounded-2xl px-4 py-3 mb-2">
       {/* Name */}
       <div className="text-white font-semibold text-base mb-2">
         {highlight(exercise.name, query)}
@@ -157,7 +157,7 @@ export default function SearchView() {
         <h1 className="text-2xl font-bold text-white py-4 text-center">Library</h1>
 
         {/* Search bar */}
-        <div className="flex items-center gap-2 bg-zinc-900 rounded-2xl px-4 py-3 mb-3 border border-zinc-800">
+        <div className="flex items-center gap-2 bg-brand-black rounded-2xl px-4 py-3 mb-3 border border-zinc-800">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             className="w-4 h-4 text-zinc-500 shrink-0">

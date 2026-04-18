@@ -42,7 +42,7 @@ export default function LoginView() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3.5 mb-3 outline-none border border-zinc-800 focus:border-zinc-600 transition-colors placeholder-zinc-600"
+          className="w-full bg-brand-black text-white rounded-2xl px-4 py-3.5 mb-3 outline-none border border-zinc-800 focus:border-zinc-600 transition-colors placeholder-zinc-600"
           style={{ fontSize: '16px' }}
         />
         <input
@@ -52,7 +52,7 @@ export default function LoginView() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3.5 mb-4 outline-none border border-zinc-800 focus:border-zinc-600 transition-colors placeholder-zinc-600"
+          className="w-full bg-brand-black text-white rounded-2xl px-4 py-3.5 mb-4 outline-none border border-zinc-800 focus:border-zinc-600 transition-colors placeholder-zinc-600"
           style={{ fontSize: '16px' }}
         />
 

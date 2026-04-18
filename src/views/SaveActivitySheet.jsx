@@ -52,7 +52,7 @@ export default function SaveActivitySheet({ open, routine, exercises, cardStates
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="How'd it go? Share more about your activity"
-            className="w-full bg-zinc-900 text-white text-sm rounded-2xl px-4 py-3 mb-4 outline-none placeholder-zinc-600 resize-none border border-zinc-800 focus:border-zinc-600 transition-colors"
+            className="w-full bg-brand-black text-white text-sm rounded-2xl px-4 py-3 mb-4 outline-none placeholder-zinc-600 resize-none border border-zinc-800 focus:border-zinc-600 transition-colors"
             rows={4}
             style={{ fontSize: '16px' }}
           />
@@ -65,7 +65,7 @@ export default function SaveActivitySheet({ open, routine, exercises, cardStates
               const filledSets = state.sets.filter((s) => s.reps || s.weight)
               if (filledSets.length === 0) return null
               return (
-                <div key={ex.name} className="bg-zinc-900 rounded-2xl px-4 py-3">
+                <div key={ex.name} className="bg-brand-black rounded-2xl px-4 py-3">
                   <div className="flex items-start justify-between mb-1">
                     <div>
                       <div className="text-white font-bold text-lg leading-tight">{ex.name}</div>

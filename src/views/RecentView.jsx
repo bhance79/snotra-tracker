@@ -56,7 +56,7 @@ function WorkoutCard({ workout, onDelete }) {
   }
 
   return (
-    <div className="bg-zinc-900 rounded-2xl px-4 py-4 mb-4">
+    <div className="bg-brand-black border border-white/10 rounded-2xl px-4 py-4 mb-4">
       {/* Header */}
       <div className="flex items-start justify-between mb-1">
         <h2 className="text-lg font-bold text-white">{workout.routine_label} Workout</h2>

@@ -110,7 +110,7 @@ function ExerciseMenu({ onEdit, onSwitch, onRemove, onClose }) {
   return (
     <div className="absolute inset-0 z-30 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-t-2xl border-t border-zinc-800 px-4 pt-4 pb-10 flex flex-col gap-2">
+      <div className="relative bg-brand-black rounded-t-2xl border-t border-zinc-800 px-4 pt-4 pb-10 flex flex-col gap-2">
         <button
           onClick={onEdit}
           className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
@@ -271,7 +271,7 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
   const primaryMuscle = exercise.muscles[0]
 
   return (
-    <div className={`rounded-2xl overflow-hidden transition-opacity ${isDragging ? 'opacity-90 ring-1 ring-white/20' : 'opacity-100'} ${done ? 'bg-zinc-900' : 'bg-zinc-800'}`}>
+    <div className={`rounded-2xl overflow-hidden transition-opacity border ${isDragging ? 'opacity-90' : 'opacity-100'} bg-brand-black ${done ? 'border-white/5' : 'border-white/10'}`}>
       {/* Header */}
       <div className="flex items-stretch">
         <div
@@ -379,7 +379,7 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
 
           {/* Rest / lap timer */}
           {lapTime !== null && (
-            <div className="flex items-center justify-center gap-2 mt-4 py-2 rounded-xl bg-zinc-900">
+            <div className="flex items-center justify-center gap-2 mt-4 py-2 rounded-xl bg-brand-black">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-brand-silver">
                 <circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15.5 15.5" />
               </svg>
@@ -395,7 +395,7 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
           </button>
           <div className="flex gap-2 mt-3">
             <button onClick={onArchives} className="flex-1 py-3 rounded-xl bg-zinc-700 text-white text-sm font-semibold active:bg-zinc-600 transition-colors">Archives</button>
-            <button onClick={markDone} className="flex-1 py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold active:bg-zinc-800 transition-colors">Done</button>
+            <button onClick={markDone} className="flex-1 py-3 rounded-xl bg-brand-black text-white text-sm font-semibold active:bg-zinc-800 transition-colors">Done</button>
           </div>
         </div>
       )}
@@ -489,7 +489,7 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
                     disabled={alreadyAdded}
                     className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-colors ${
                       alreadyAdded
-                        ? 'bg-zinc-900 opacity-40 cursor-default'
+                        ? 'bg-brand-black opacity-40 cursor-default'
                         : 'bg-zinc-800 active:bg-zinc-700'
                     }`}
                   >
@@ -560,7 +560,7 @@ function ExerciseArchivesSheet({ exerciseName, onClose }) {
           ) : (
             <div className="flex flex-col gap-4">
               {entries.map((entry, ei) => (
-                <div key={ei} className="bg-zinc-900 rounded-2xl px-4 py-3">
+                <div key={ei} className="bg-brand-black border border-white/10 rounded-2xl px-4 py-3">
                   <p className="text-zinc-400 text-xs font-medium mb-2">{formatDate(entry.date)}</p>
                   {/* Column headers */}
                   <div className="grid grid-cols-[28px_1fr_1fr_auto] gap-x-3 px-1 mb-1.5">

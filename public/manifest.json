@@ -4,8 +4,8 @@
   "description": "A mobile-first fitness tracker",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#222222",
+  "theme_color": "#222222",
   "orientation": "portrait",
   "icons": [
     {

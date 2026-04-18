@@ -12,7 +12,7 @@ export default {
           red: '#D91B24',
           crimson: '#761F21',
           silver: '#C4C4C4',
-          black: '#121212',
+          black: '#111111',
         },
       },
     },
