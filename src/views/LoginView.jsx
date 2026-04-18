@@ -25,7 +25,7 @@ export default function LoginView() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen px-6 bg-brand-black">
-      <h1 className="text-3xl font-bold text-white mb-1">Snotra</h1>
+      <img src="/images/snotra-logo.png" alt="Snotra" className="h-16 w-auto mb-1" />
       <p className="text-zinc-500 text-sm mb-10">Track your workouts</p>
 
       <form

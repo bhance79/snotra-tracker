@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useReducer } from 'react'
 import { MUSCLE_COLORS } from '../data/routines'
 import { EXERCISE_LIBRARY } from '../data/exercises'
 import SaveActivitySheet from './SaveActivitySheet'
-import { saveWorkout } from '../data/storage'
+import { saveWorkout, getExerciseHistory } from '../data/storage'
 
 // ─── Session-level timer (lives in App) ───────────────────────────────────────
 // Uses an absolute start timestamp persisted in localStorage so the timer
@@ -146,16 +146,21 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
 
   const currentNames = new Set(currentExercises.map((e) => e.name))
   const libRef = EXERCISE_LIBRARY.find((e) => e.name === exercise.name)
-  const targetTier = libRef?.tier ?? null
   const targetMuscles = new Set(exercise.muscles)
+  const targetPattern = libRef?.pattern ?? null
+  const targetCategory = libRef?.category ?? null
+  const targetLiftType = libRef?.liftType ?? null
 
   const q = query.trim().toLowerCase()
 
   const pool = EXERCISE_LIBRARY.filter((ex) => {
     if (currentNames.has(ex.name) || ex.name === exercise.name) return false
-    const tierMatch = targetTier ? ex.tier === targetTier : true
-    const muscleMatch = ex.muscles.some((m) => targetMuscles.has(m))
-    return tierMatch && muscleMatch
+    return (
+      ex.muscles.some((m) => targetMuscles.has(m)) ||
+      (targetPattern && ex.pattern === targetPattern) ||
+      (targetCategory && ex.category === targetCategory) ||
+      (targetLiftType && ex.liftType === targetLiftType)
+    )
   })
 
   const results = q
@@ -175,7 +180,7 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
             <span className="text-white font-semibold text-base">Switch Exercise</span>
             <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
           </div>
-          <p className="text-zinc-500 text-xs mb-3">Same tier · overlapping muscles</p>
+          <p className="text-zinc-500 text-xs mb-3">Overlapping muscles, pattern, or category</p>
           <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -235,7 +240,7 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
 }
 
 // ─── Exercise card (controlled — state lives in parent) ───────────────────────
-function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, dragHandleProps, isDragging, onMenu, isEditing, onSetsRepsChange, onEditDone }) {
+function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, dragHandleProps, isDragging, onMenu, isEditing, onSetsRepsChange, onEditDone, onArchives }) {
   const { sets, done, lapStartedAt } = cardState
   const lapTime = useLapClock(lapStartedAt)
 
@@ -335,16 +340,16 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
       {/* Expanded content */}
       {isActive && (
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-[28px_1fr_1fr_auto_20px] gap-x-2 px-1 mb-2">
+          <div className={`grid gap-x-2 px-1 mb-2 ${isEditing ? 'grid-cols-[28px_1fr_1fr_auto_20px]' : 'grid-cols-[28px_1fr_1fr_auto]'}`}>
             <span className="text-xs text-zinc-500 font-medium">Set</span>
             <span className="text-xs text-zinc-500 font-medium">Reps</span>
             <span className="text-xs text-zinc-500 font-medium">Weight</span>
             <span className="text-xs text-zinc-500 font-medium">Rating</span>
-            <span />
+            {isEditing && <span />}
           </div>
           <div className="flex flex-col gap-2">
             {sets.map((set, i) => (
-              <div key={i} className="grid grid-cols-[28px_1fr_1fr_auto_20px] gap-x-2 items-center">
+              <div key={i} className={`grid gap-x-2 items-center ${isEditing ? 'grid-cols-[28px_1fr_1fr_auto_20px]' : 'grid-cols-[28px_1fr_1fr_auto]'}`}>
                 <span className="text-sm text-zinc-400 text-center">{i + 1}</span>
                 <input type="number" inputMode="numeric" placeholder="—" value={set.reps}
                   onChange={(e) => updateSet(i, 'reps', e.target.value)}
@@ -362,10 +367,12 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
                   <span className="text-zinc-500 text-xs ml-1 shrink-0">lbs</span>
                 </div>
                 <RatingWidget value={set.rating} onChange={(v) => onRating(i, v)} />
-                <button
-                  onClick={() => onCardState({ sets: sets.filter((_, idx) => idx !== i) })}
-                  className="text-zinc-600 active:text-brand-red transition-colors text-base leading-none"
-                >×</button>
+                {isEditing && (
+                  <button
+                    onClick={() => onCardState({ sets: sets.filter((_, idx) => idx !== i) })}
+                    className="text-zinc-600 active:text-brand-red transition-colors text-base leading-none"
+                  >×</button>
+                )}
               </div>
             ))}
           </div>
@@ -387,7 +394,7 @@ function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, 
             + Add Set
           </button>
           <div className="flex gap-2 mt-3">
-            <button className="flex-1 py-3 rounded-xl bg-zinc-700 text-white text-sm font-semibold active:bg-zinc-600 transition-colors">Archives</button>
+            <button onClick={onArchives} className="flex-1 py-3 rounded-xl bg-zinc-700 text-white text-sm font-semibold active:bg-zinc-600 transition-colors">Archives</button>
             <button onClick={markDone} className="flex-1 py-3 rounded-xl bg-zinc-900 text-white text-sm font-semibold active:bg-zinc-800 transition-colors">Done</button>
           </div>
         </div>
@@ -509,6 +516,83 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
   )
 }
 
+// ─── Exercise archives sheet ──────────────────────────────────────────────────
+function ExerciseArchivesSheet({ exerciseName, onClose }) {
+  const [entries, setEntries] = useState(null) // null = loading
+
+  useEffect(() => {
+    getExerciseHistory(exerciseName).then(setEntries)
+  }, [exerciseName])
+
+  function formatDate(iso) {
+    const d = new Date(iso)
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const RATING_DOTS = [1, 2, 3]
+
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]">
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3 shrink-0 border-b border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-white font-semibold text-base">{exerciseName}</span>
+              <p className="text-zinc-500 text-xs mt-0.5">Past sessions</p>
+            </div>
+            <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto pb-8 px-4 pt-3">
+          {entries === null ? (
+            <div className="flex justify-center py-12">
+              <div className="w-5 h-5 rounded-full border-2 border-brand-red border-t-transparent animate-spin" />
+            </div>
+          ) : entries.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="text-zinc-500 text-sm">No history yet</p>
+              <p className="text-zinc-600 text-xs mt-1">Complete a session to see it here</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {entries.map((entry, ei) => (
+                <div key={ei} className="bg-zinc-900 rounded-2xl px-4 py-3">
+                  <p className="text-zinc-400 text-xs font-medium mb-2">{formatDate(entry.date)}</p>
+                  {/* Column headers */}
+                  <div className="grid grid-cols-[28px_1fr_1fr_auto] gap-x-3 px-1 mb-1.5">
+                    <span className="text-xs text-zinc-600">Set</span>
+                    <span className="text-xs text-zinc-600">Reps</span>
+                    <span className="text-xs text-zinc-600">Weight</span>
+                    <span className="text-xs text-zinc-600">Rating</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {entry.exercise.sets.map((s, si) => (
+                      <div key={si} className="grid grid-cols-[28px_1fr_1fr_auto] gap-x-3 items-center">
+                        <span className="text-xs text-zinc-500 text-center">{si + 1}</span>
+                        <span className="text-sm text-white font-medium text-center">{s.reps || '—'}</span>
+                        <span className="text-sm text-white font-medium text-center">{s.weight ? `${s.weight} lbs` : '—'}</span>
+                        <div className="flex gap-0.5">
+                          {RATING_DOTS.map((d) => (
+                            <div key={d} className={`w-2.5 h-2.5 rounded-sm ${d <= (s.rating ?? 0) ? 'bg-zinc-400' : 'bg-zinc-700'}`} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function makeCardState(exercise) {
   return {
@@ -528,6 +612,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
   const [menuOpenIdx, setMenuOpenIdx] = useState(null)
   const [editingIdx, setEditingIdx] = useState(null)
   const [switchingIdx, setSwitchingIdx] = useState(null)
+  const [archivesExercise, setArchivesExercise] = useState(null)
 
   // exercises + per-card state — persists across open/close, resets only on new session
   const [exercises, setExercises] = useState([])
@@ -721,6 +806,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
             isEditing={editingIdx === i}
             onSetsRepsChange={(val) => updateSetsReps(i, val)}
             onEditDone={() => setEditingIdx(null)}
+            onArchives={() => setArchivesExercise(ex.name)}
           />
         </div>
       )
@@ -793,6 +879,13 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
             currentExercises={exercises}
             onSwitch={(libEx) => switchExercise(switchingIdx, libEx)}
             onClose={() => setSwitchingIdx(null)}
+          />
+        )}
+
+        {archivesExercise !== null && (
+          <ExerciseArchivesSheet
+            exerciseName={archivesExercise}
+            onClose={() => setArchivesExercise(null)}
           />
         )}
 
