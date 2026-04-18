@@ -2,6 +2,9 @@
   command = "npm ci && npx vite build"
   publish = "dist"
 
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_STRAVA_CLIENT_SECRET"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
