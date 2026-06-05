@@ -47,7 +47,7 @@ export const ROUTINES = [
     id: 'push',
     label: 'Push',
     subtitle: 'Chest · Shoulders · Triceps',
-    exercises: ['Barbell Bench Press', 'Incline DB Press', 'Cable Lateral Raise', 'OHP Dumbbell', 'Tricep Pushdown', 'OH Tricep Extension'],
+    exercises: ['Barbell Bench Press', 'Incline Dumbbell Bench', 'Cable Lateral Raise', 'Dumbbell Shoulder Press', 'Tricep Pushdown', 'Overhead Tricep Extension'],
     sections: [
       {
         title: 'Compound lifts',
@@ -65,7 +65,7 @@ export const ROUTINES = [
         title: 'Accessory lifts',
         exercises: [
           {
-            name: 'Incline Dumbbell Press',
+            name: 'Incline Dumbbell Bench',
             setsReps: '3 × 8–10',
             progression: 'Add reps, then weight',
             selected: true,
@@ -79,14 +79,14 @@ export const ROUTINES = [
             muscles: ['Side Delts'],
           },
           {
-            name: 'Overhead Dumbbell Press',
+            name: 'Dumbbell Shoulder Press',
             setsReps: '3 × 8–10',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Front Delts', 'Side Delts', 'Triceps', 'Traps'],
           },
           {
-            name: 'Tricep Pushdown (cable)',
+            name: 'Tricep Pushdown',
             setsReps: '3 × 12–15',
             progression: 'Add reps, then weight',
             selected: true,
@@ -107,13 +107,13 @@ export const ROUTINES = [
     id: 'pull',
     label: 'Pull',
     subtitle: 'Back · Biceps · Rear Delts',
-    exercises: ['Barbell Row', 'Weighted Pull-Up', 'Seated Cable Row', 'Face Pull', 'Incline DB Curl', 'Hammer Curl'],
+    exercises: ['Barbell Row', 'Pull-Ups', 'Seated Cable Row', 'Face Pull', 'Incline Dumbbell Curl', 'Hammer Curl'],
     sections: [
       {
         title: 'Compound lifts',
         exercises: [
           {
-            name: 'Barbell Row (Pendlay or Bent-Over)',
+            name: 'Barbell Row',
             setsReps: '4 × 5–6',
             progression: 'Add 2.5 kg when top rep hit 2 sessions in a row',
             selected: true,
@@ -125,7 +125,7 @@ export const ROUTINES = [
         title: 'Accessory lifts',
         exercises: [
           {
-            name: 'Weighted Pull-up / Lat Pulldown',
+            name: 'Pull-Ups',
             setsReps: '3 × 6–8',
             progression: 'Add reps, then weight',
             selected: true,
@@ -139,7 +139,7 @@ export const ROUTINES = [
             muscles: ['Lats', 'Rhomboids', 'Rear Delts'],
           },
           {
-            name: 'Face Pull (cable)',
+            name: 'Face Pull',
             setsReps: '3 × 15',
             progression: 'Add reps, then weight',
             selected: true,
@@ -192,14 +192,14 @@ export const ROUTINES = [
             muscles: ['Quads', 'Glutes'],
           },
           {
-            name: 'Bulgarian Split Squat (dumbbell)',
+            name: 'Bulgarian Split Squat',
             setsReps: '3 × 8 ea.',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Quads', 'Glutes', 'Hip Flexors'],
           },
           {
-            name: 'Walking Lunges (dumbbell)',
+            name: 'Walking Lunges',
             setsReps: '2–3 × 10 ea.',
             progression: 'Add reps, then weight',
             selected: true,
@@ -213,14 +213,14 @@ export const ROUTINES = [
             muscles: ['Quads'],
           },
           {
-            name: 'Hip Abduction (machine or cable)',
+            name: 'Hip Abduction',
             setsReps: '3 × 15',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Glutes', 'Hip Abductors'],
           },
           {
-            name: 'Hip Adduction (machine or cable)',
+            name: 'Hip Adduction',
             setsReps: '3 × 15',
             progression: 'Add reps, then weight',
             selected: true,
@@ -241,7 +241,7 @@ export const ROUTINES = [
     id: 'upper',
     label: 'Upper',
     subtitle: 'Heavy Compounds · Intensity Focus',
-    exercises: ['Overhead Barbell Press', 'Close-Grip Bench', 'Single-Arm DB Row', 'Cable Lateral Raise', 'Rear Delt Fly', 'Barbell Curl'],
+    exercises: ['Overhead Barbell Press', 'Close-Grip Bench Press', 'Single Arm DB Row', 'Cable Lateral Raise', 'Rear Delt Fly', 'Barbell Curl'],
     sections: [
       {
         title: 'Compound lifts',
@@ -254,7 +254,7 @@ export const ROUTINES = [
             muscles: ['Compound Lift', 'Front Delts', 'Side Delts', 'Triceps', 'Traps'],
           },
           {
-            name: 'Close-Grip Barbell Bench Press',
+            name: 'Close-Grip Bench Press',
             setsReps: '3 × 6–8',
             progression: 'Add 2.5 kg when top rep hit 2 sessions in a row',
             selected: true,
@@ -266,7 +266,7 @@ export const ROUTINES = [
         title: 'Accessory lifts',
         exercises: [
           {
-            name: 'Single-Arm Dumbbell Row',
+            name: 'Single Arm DB Row',
             setsReps: '4 × 8 ea.',
             progression: 'Add reps, then weight',
             selected: true,
@@ -280,14 +280,14 @@ export const ROUTINES = [
             muscles: ['Side Delts'],
           },
           {
-            name: 'Rear Delt Fly (machine or cable)',
+            name: 'Rear Delt Fly',
             setsReps: '3 × 15',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Rear Delts', 'Rhomboids'],
           },
           {
-            name: 'Barbell or Dumbbell Curl',
+            name: 'Barbell Curl',
             setsReps: '3 × 10–12',
             progression: 'Add reps, then weight',
             selected: true,
@@ -319,35 +319,35 @@ export const ROUTINES = [
         title: 'Accessory lifts',
         exercises: [
           {
-            name: 'Hip Thrust (barbell)',
+            name: 'Hip Thrust',
             setsReps: '3 × 8–10',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Glutes', 'Hamstrings'],
           },
           {
-            name: 'Leg Press (high foot placement)',
+            name: 'Leg Press (High Foot)',
             setsReps: '3 × 10–12',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Glutes', 'Hamstrings', 'Quads'],
           },
           {
-            name: 'Bulgarian Split Squat (dumbbell)',
+            name: 'Bulgarian Split Squat',
             setsReps: '2–3 × 8 ea.',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Quads', 'Glutes', 'Hip Flexors'],
           },
           {
-            name: 'Nordic Curl / Leg Curl',
+            name: 'Nordic Curl',
             setsReps: '3 × 8–10',
             progression: 'Add reps, then weight',
             selected: true,
             muscles: ['Hamstrings'],
           },
           {
-            name: 'Single-Leg RDL (dumbbell)',
+            name: 'Single-Leg RDL',
             setsReps: '2–3 × 10 ea.',
             progression: 'Add reps, then weight',
             selected: true,

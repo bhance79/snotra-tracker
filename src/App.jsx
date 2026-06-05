@@ -1,54 +1,64 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
-import { migrateLocalData } from './data/storage'
+import { migrateLocalData, getActiveSession, clearActiveSession } from './data/storage'
 import BottomNav from './components/BottomNav'
 import HomeView from './views/HomeView'
 import RecentView from './views/RecentView'
-import RecordSheet from './views/RecordSheet'
-import WorkoutSession, { useTimer } from './views/WorkoutSession'
+import RecordView from './views/RecordView'
+import WorkoutSession, { useTimer, clearSavedSession, TIMER_KEY } from './views/WorkoutSession'
 import SearchView from './views/SearchView'
 import ProfileView from './views/ProfileView'
 import LoginView from './views/LoginView'
 
-const views = {
-  home: HomeView,
-  recent: RecentView,
-  search: SearchView,
-  profile: ProfileView,
-}
-
 export default function App() {
-  const [user, setUser] = useState(undefined) // undefined = loading, null = logged out
+  const [user, setUser] = useState(undefined)
   const [activeView, setActiveView] = useState('home')
-  const [recordOpen, setRecordOpen] = useState(false)
   const [sessionRoutine, setSessionRoutine] = useState(null)
   const [sessionOpen, setSessionOpen] = useState(false)
   const [recentsKey, setRecentsKey] = useState(0)
   const timer = useTimer(!!sessionRoutine)
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
     })
 
-    // Listen for auth changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (u) await migrateLocalData() // migrate any pre-auth local data
+      if (u) await migrateLocalData()
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!user) return
+    async function restore() {
+      try {
+        let saved = JSON.parse(localStorage.getItem('snotra_session') ?? 'null')
+        if (!saved?.routine) {
+          const remote = await getActiveSession()
+          if (remote?.routine) {
+            if (remote.startedAt) {
+              localStorage.setItem(TIMER_KEY, remote.startedAt)
+            }
+            localStorage.setItem('snotra_session', JSON.stringify(remote))
+            saved = remote
+          }
+        }
+        if (saved?.routine) {
+          setSessionRoutine(saved.routine)
+          setSessionOpen(true)
+        }
+      } catch (_) {}
+    }
+    restore()
+  }, [user])
+
   function handleNavChange(view) {
-    if (view === 'record') {
-      if (sessionRoutine) {
-        setSessionOpen(true)
-      } else {
-        setRecordOpen(true)
-      }
+    if (view === 'record' && sessionRoutine) {
+      setSessionOpen(true)
     } else {
       setActiveView(view)
     }
@@ -57,7 +67,6 @@ export default function App() {
   function handleSessionStart(routine) {
     setSessionRoutine(routine)
     setSessionOpen(true)
-    setRecordOpen(false)
   }
 
   function handleSessionClose() {
@@ -65,6 +74,8 @@ export default function App() {
   }
 
   function handleSessionEnd(goToRecents = false) {
+    clearSavedSession()
+    clearActiveSession().catch(() => {})
     setSessionRoutine(null)
     setSessionOpen(false)
     if (goToRecents) {
@@ -73,7 +84,6 @@ export default function App() {
     }
   }
 
-  // Loading state
   if (user === undefined) {
     return (
       <div className="flex items-center justify-center h-screen bg-brand-black">
@@ -82,27 +92,28 @@ export default function App() {
     )
   }
 
-  // Not logged in
   if (user === null) {
     return <LoginView />
   }
 
-  const ActiveView = views[activeView]
+  function renderView() {
+    if (activeView === 'home') return <HomeView refreshKey={recentsKey} />
+    if (activeView === 'recent') return <RecentView refreshKey={recentsKey} />
+    if (activeView === 'record') return <RecordView onSessionStart={handleSessionStart} />
+    if (activeView === 'search') return <SearchView />
+    if (activeView === 'profile') return <ProfileView />
+    return null
+  }
 
   return (
     <div className="relative flex flex-col h-screen bg-brand-black text-white overflow-hidden">
-      <main className="flex-1 overflow-y-auto z-0">
-        <ActiveView refreshKey={recentsKey} />
+      <main className="flex-1 overflow-y-auto z-0 pb-24">
+        {renderView()}
       </main>
       <BottomNav
-        active={recordOpen ? 'record' : activeView}
+        active={activeView}
         onChange={handleNavChange}
         sessionActive={!!sessionRoutine}
-      />
-      <RecordSheet
-        open={recordOpen}
-        onClose={() => setRecordOpen(false)}
-        onSessionStart={handleSessionStart}
       />
       <WorkoutSession
         routine={sessionRoutine}

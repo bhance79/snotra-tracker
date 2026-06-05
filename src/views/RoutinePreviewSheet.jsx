@@ -97,7 +97,7 @@ export default function RoutinePreviewSheet({ routine, open, onClose }) {
         {/* Scrollable content */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-8">
           <div className="mt-4 mb-6">
-            <h1 className="text-4xl font-bold text-white">{routine.label} routine</h1>
+            <h1 className="text-lg font-bold text-white">{routine.label} routine</h1>
             {routine.subtitle && (
               <p className="text-brand-silver text-sm mt-1">{routine.subtitle}</p>
             )}

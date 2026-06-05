@@ -2,12 +2,17 @@ import { useState, useEffect, useRef, useReducer } from 'react'
 import { MUSCLE_COLORS } from '../data/routines'
 import { EXERCISE_LIBRARY } from '../data/exercises'
 import SaveActivitySheet from './SaveActivitySheet'
-import { saveWorkout, getExerciseHistory } from '../data/storage'
+import { completeWorkout, getExerciseHistory, saveActiveSession } from '../data/storage'
 
 // ─── Session-level timer (lives in App) ───────────────────────────────────────
 // Uses an absolute start timestamp persisted in localStorage so the timer
 // keeps running correctly after the app is backgrounded or the tab is switched.
-const TIMER_KEY = 'snotra_timer_start'
+export const TIMER_KEY = 'snotra_timer_start'
+const SESSION_KEY = 'snotra_session'
+
+export function clearSavedSession() {
+  localStorage.removeItem(SESSION_KEY)
+}
 
 export function useTimer(running) {
   const [, tick] = useReducer((x) => x + 1, 0)
@@ -624,6 +629,16 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     if (!routine) return
     if (routine.id !== prevRoutineId.current) {
       prevRoutineId.current = routine.id
+      try {
+        const saved = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
+        if (saved?.routineId === routine.id && saved.exercises?.length) {
+          setExercises(saved.exercises)
+          setCardStates(saved.cardStates)
+          setActiveExercise(saved.activeExercise ?? 0)
+          setShowPicker(false)
+          return
+        }
+      } catch (_) {}
       const exs = routine.sections.flatMap((s) => s.exercises).filter((e) => e.selected)
       setExercises(exs)
       setCardStates(exs.map(makeCardState))
@@ -631,6 +646,70 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
       setShowPicker(false)
     }
   }, [routine])
+
+  // Auto-save session state on every change
+  useEffect(() => {
+    if (!routine || exercises.length === 0) return
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      routineId: routine.id,
+      routine,
+      exercises,
+      cardStates,
+      activeExercise,
+      startedAt: localStorage.getItem(TIMER_KEY),
+    }))
+  }, [routine, exercises, cardStates, activeExercise])
+
+  // Keep a ref with the latest session state so pagehide/visibilitychange
+  // handlers always capture the most recent values (avoids stale closures).
+  const sessionRef = useRef(null)
+  useEffect(() => {
+    sessionRef.current = { routine, exercises, cardStates, activeExercise }
+  }, [routine, exercises, cardStates, activeExercise])
+
+  // Force-save to localStorage on iOS backgrounding / page hide.
+  // These events fire even when iOS is about to suspend or kill the process.
+  useEffect(() => {
+    function forceSave() {
+      const s = sessionRef.current
+      if (!s?.routine || !s.exercises?.length) return
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        routineId: s.routine.id,
+        routine: s.routine,
+        exercises: s.exercises,
+        cardStates: s.cardStates,
+        activeExercise: s.activeExercise,
+        startedAt: localStorage.getItem(TIMER_KEY),
+      }))
+    }
+    window.addEventListener('pagehide', forceSave)
+    const onVisibility = () => { if (document.hidden) forceSave() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', forceSave)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
+
+  // Debounced Supabase cloud backup — fires 4s after the last state change.
+  // This is a safety net: if iOS clears localStorage, the session can be
+  // recovered from Supabase on the next launch.
+  const syncTimerRef = useRef(null)
+  useEffect(() => {
+    if (!routine || exercises.length === 0) return
+    clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = setTimeout(() => {
+      saveActiveSession({
+        routineId: routine.id,
+        routine,
+        exercises,
+        cardStates,
+        activeExercise,
+        startedAt: localStorage.getItem(TIMER_KEY),
+      }).catch(() => {})
+    }, 4000)
+    return () => clearTimeout(syncTimerRef.current)
+  }, [routine, exercises, cardStates, activeExercise])
 
   function updateCardState(i, patch) {
     setCardStates((prev) => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
@@ -836,7 +915,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
         </div>
 
         <div className="flex items-center justify-between px-5 pb-3 shrink-0">
-          <h1 className="text-3xl font-bold text-white">{routine.label}</h1>
+          <h1 className="text-lg font-bold text-white">{routine.label}</h1>
           <div className="flex items-center gap-3">
             <span className="text-white font-mono text-base">{timer}</span>
             <button onClick={() => setShowSummary(true)} className="bg-brand-red text-white text-sm font-semibold px-5 py-2 rounded-full active:bg-brand-crimson transition-colors">
@@ -896,11 +975,9 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
           cardStates={cardStates}
           onResume={() => setShowSummary(false)}
           onSave={async (notes) => {
-            await saveWorkout({
-              id: Date.now().toString(),
-              date: new Date().toISOString(),
-              routine_id: routine.id,
-              routine_label: routine.label,
+            await completeWorkout({
+              routineLabel: routine.label,
+              routineSlug: routine.id,
               notes: notes || '',
               exercises: exercises.map((ex, i) => ({
                 name: ex.name,
@@ -908,11 +985,14 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                 muscles: ex.muscles || [],
                 sets: (cardStates[i]?.sets ?? []).filter((s) => s.reps || s.weight),
               })),
+              startedAt: localStorage.getItem(TIMER_KEY),
             })
+            localStorage.removeItem(SESSION_KEY)
             setShowSummary(false)
             onFinish(true)
           }}
           onDiscard={() => {
+            localStorage.removeItem(SESSION_KEY)
             prevRoutineId.current = null
             setExercises([])
             setCardStates([])

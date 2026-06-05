@@ -45,7 +45,7 @@ export default function SaveActivitySheet({ open, routine, exercises, cardStates
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {/* Routine title */}
-          <h1 className="text-4xl font-bold text-white mt-4 mb-4">{routine.label} Workout</h1>
+          <h1 className="text-lg font-bold text-white mt-4 mb-4">{routine.label} Workout</h1>
 
           {/* Notes */}
           <textarea
