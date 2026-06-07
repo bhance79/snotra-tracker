@@ -420,11 +420,36 @@ export async function deleteWorkout(id) {
 // the slug from the label via a static mapping.
 
 const LABEL_TO_SLUG = {
-  'Push':  'push',
-  'Pull':  'pull',
-  'Legs':  'lower-quad',
-  'Upper': 'upper',
-  'Lower': 'lower-hinge',
+  'Push':    'push',
+  'Push A':  'push',
+  'Push B':  'push',
+  'Pull':    'pull',
+  'Pull A':  'pull',
+  'Pull B':  'pull',
+  'Legs':    'lower-quad',
+  'Legs A':  'lower-quad',
+  'Legs B':  'lower-quad',
+  'Upper':   'upper',
+  'Upper A': 'upper',
+  'Upper B': 'upper',
+  'Lower':   'lower-hinge',
+  'Lower A': 'lower-hinge',
+  'Lower B': 'lower-hinge',
+}
+
+// ─── getLastWorkoutDate ────────────────────────────────────────────────────
+// Returns the ISO timestamp of the most recent completed workout matching
+// the given routine label (e.g. 'Push A'), or null if none found.
+
+export async function getLastWorkoutDate(routineLabel) {
+  const { data } = await supabase
+    .from('workouts')
+    .select('completed_at')
+    .eq('routine_label', routineLabel)
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+  return data?.[0]?.completed_at ?? null
 }
 
 export async function getLastRoutineId() {

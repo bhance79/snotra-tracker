@@ -5,8 +5,6 @@ import SaveActivitySheet from './SaveActivitySheet'
 import { completeWorkout, getExerciseHistory, saveActiveSession } from '../data/storage'
 
 // ─── Session-level timer (lives in App) ───────────────────────────────────────
-// Uses an absolute start timestamp persisted in localStorage so the timer
-// keeps running correctly after the app is backgrounded or the tab is switched.
 export const TIMER_KEY = 'snotra_timer_start'
 const SESSION_KEY = 'snotra_session'
 
@@ -14,7 +12,7 @@ export function clearSavedSession() {
   localStorage.removeItem(SESSION_KEY)
 }
 
-export function useTimer(running) {
+export function useTimer(running, paused = false) {
   const [, tick] = useReducer((x) => x + 1, 0)
 
   useEffect(() => {
@@ -23,7 +21,10 @@ export function useTimer(running) {
       tick()
       return
     }
-    // Preserve existing start across re-renders / tab restores
+    if (paused) {
+      tick() // freeze display at current value
+      return
+    }
     if (!localStorage.getItem(TIMER_KEY)) {
       localStorage.setItem(TIMER_KEY, String(Date.now()))
     }
@@ -34,7 +35,7 @@ export function useTimer(running) {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [running])
+  }, [running, paused])
 
   if (!running) return '00:00'
   const start = Number(localStorage.getItem(TIMER_KEY) ?? Date.now())
@@ -44,7 +45,7 @@ export function useTimer(running) {
   return `${mm}:${ss}`
 }
 
-// ─── Lap timer — absolute timestamp + visibilitychange catchup ────────────────
+// ─── Lap timer ────────────────────────────────────────────────────────────────
 function useLapClock(startedAt) {
   const [, tick] = useReducer((x) => x + 1, 0)
   useEffect(() => {
@@ -101,37 +102,33 @@ function RatingWidget({ value, onChange }) {
     }
   }, [])
 
+  const activeColor = value === 1 ? 'bg-brand-red' : value === 2 ? 'bg-yellow-400' : value === 3 ? 'bg-emerald-400' : ''
+
   return (
     <div ref={containerRef} className="flex gap-1 touch-none">
       {[1, 2, 3].map((l) => (
-        <div key={l} className={`w-7 h-7 rounded-md transition-colors ${l <= value ? 'bg-zinc-500' : 'bg-zinc-700'}`} />
+        <div key={l} className={`w-10 h-9 rounded-md transition-colors ${l <= value ? activeColor : 'bg-zinc-700'}`} />
       ))}
     </div>
   )
 }
 
 // ─── Exercise action menu ─────────────────────────────────────────────────────
-function ExerciseMenu({ onEdit, onSwitch, onRemove, onClose }) {
+function ExerciseMenu({ onEdit, onSwitch, onRemove, onAdd, onClose }) {
   return (
     <div className="absolute inset-0 z-30 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-brand-black rounded-t-2xl border-t border-zinc-800 px-4 pt-4 pb-10 flex flex-col gap-2">
-        <button
-          onClick={onEdit}
-          className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
-        >
+        <button onClick={onAdd} className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5">
+          Add Exercise
+        </button>
+        <button onClick={onEdit} className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5">
           Edit Sets & Reps
         </button>
-        <button
-          onClick={onSwitch}
-          className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
-        >
+        <button onClick={onSwitch} className="w-full py-4 rounded-xl bg-zinc-800 text-white font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5">
           Switch Exercise
         </button>
-        <button
-          onClick={onRemove}
-          className="w-full py-4 rounded-xl bg-zinc-800 text-brand-red font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5"
-        >
+        <button onClick={onRemove} className="w-full py-4 rounded-xl bg-zinc-800 text-brand-red font-semibold text-base active:bg-zinc-700 transition-colors text-left px-5">
           Remove
         </button>
       </div>
@@ -139,7 +136,7 @@ function ExerciseMenu({ onEdit, onSwitch, onRemove, onClose }) {
   )
 }
 
-// ─── Switch exercise picker ────────────────────────────────────────────────────
+// ─── Switch exercise picker ───────────────────────────────────────────────────
 function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose }) {
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
@@ -155,7 +152,6 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
   const targetPattern = libRef?.pattern ?? null
   const targetCategory = libRef?.category ?? null
   const targetLiftType = libRef?.liftType ?? null
-
   const q = query.trim().toLowerCase()
 
   const pool = EXERCISE_LIBRARY.filter((ex) => {
@@ -169,11 +165,7 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
   })
 
   const results = q
-    ? pool.filter((ex) =>
-        ex.name.toLowerCase().includes(q) ||
-        ex.muscles.some((m) => m.toLowerCase().includes(q)) ||
-        ex.pattern.toLowerCase().includes(q)
-      )
+    ? pool.filter((ex) => ex.name.toLowerCase().includes(q) || ex.muscles.some((m) => m.toLowerCase().includes(q)) || ex.pattern.toLowerCase().includes(q))
     : pool
 
   return (
@@ -187,29 +179,18 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
           </div>
           <p className="text-zinc-500 text-xs mb-3">Overlapping muscles, pattern, or category</p>
           <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="w-4 h-4 text-zinc-500 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-zinc-500 shrink-0">
               <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
             </svg>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Filter…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm"
-              style={{ fontSize: '16px' }}
-            />
-            {query ? (
+            <input ref={inputRef} type="text" placeholder="Filter…" value={query} onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm" style={{ fontSize: '16px' }} />
+            {query && (
               <button onClick={() => setQuery('')} className="text-zinc-500 active:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-            ) : null}
+            )}
           </div>
         </div>
         <div className="overflow-y-auto pb-8 px-4">
@@ -218,20 +199,15 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
           ) : (
             <div className="flex flex-col gap-1.5">
               {results.map((ex) => (
-                <button
-                  key={ex.name}
-                  onClick={() => onSwitch(ex)}
-                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-zinc-800 active:bg-zinc-700 text-left transition-colors"
-                >
+                <button key={ex.name} onClick={() => onSwitch(ex)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-zinc-800 active:bg-zinc-700 text-left transition-colors">
                   <div className="min-w-0 mr-3">
                     <div className="text-white text-sm font-semibold truncate">{ex.name}</div>
                     <div className="text-zinc-500 text-xs mt-0.5">{ex.pattern} · {ex.equipment}</div>
                   </div>
                   <div className="flex flex-wrap gap-1 justify-end shrink-0 max-w-[130px]">
                     {ex.muscles.slice(0, 2).map((m) => (
-                      <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>
-                        {m}
-                      </span>
+                      <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>{m}</span>
                     ))}
                   </div>
                 </button>
@@ -244,170 +220,6 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
   )
 }
 
-// ─── Exercise card (controlled — state lives in parent) ───────────────────────
-function ExerciseCard({ exercise, cardState, onCardState, isActive, onActivate, dragHandleProps, isDragging, onMenu, isEditing, onSetsRepsChange, onEditDone, onArchives }) {
-  const { sets, done, lapStartedAt } = cardState
-  const lapTime = useLapClock(lapStartedAt)
-
-  function updateSet(i, field, val) {
-    const updated = sets.map((s, idx) => (idx === i ? { ...s, [field]: val } : s))
-    onCardState({ sets: updated })
-  }
-
-  function autofillFromFirst(field) {
-    const firstVal = sets[0][field]
-    if (!firstVal) return
-    const filled = sets.map((s, idx) =>
-      idx > 0 && !s[field] ? { ...s, [field]: firstVal } : s
-    )
-    onCardState({ sets: filled })
-  }
-
-  function onRating(i, v) {
-    updateSet(i, 'rating', v)
-    if (v > 0) onCardState({ lapStartedAt: Date.now() })
-  }
-
-  function markDone() {
-    onCardState({ done: true, lapStartedAt: null })
-    onActivate()
-  }
-
-  const primaryMuscle = exercise.muscles[0]
-
-  return (
-    <div className={`rounded-2xl overflow-hidden transition-opacity border ${isDragging ? 'opacity-90' : 'opacity-100'} bg-brand-black ${done ? 'border-white/5' : 'border-white/10'}`}>
-      {/* Header */}
-      <div className="flex items-stretch">
-        <div
-          ref={dragHandleProps.ref}
-          onTouchStart={dragHandleProps.onTouchStart}
-          onTouchEnd={dragHandleProps.onTouchEnd}
-          className="flex items-center justify-center px-3 text-zinc-600 active:text-zinc-400 touch-none cursor-grab"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-            <rect x="4" y="5" width="16" height="2" rx="1" />
-            <rect x="4" y="11" width="16" height="2" rx="1" />
-            <rect x="4" y="17" width="16" height="2" rx="1" />
-          </svg>
-        </div>
-
-        <button className="flex-1 pt-4 pb-3 pr-4 text-left" onClick={onActivate}>
-          <div className="flex items-start justify-between">
-            <span className={`text-lg font-bold ${done ? 'text-zinc-500' : 'text-white'}`}>{exercise.name}</span>
-            <div className="flex items-center gap-2 shrink-0 pl-2">
-              {primaryMuscle && isActive && primaryMuscle === 'Compound Lift' && (
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${MUSCLE_COLORS[primaryMuscle] ?? 'bg-zinc-600 text-white'}`}>
-                  {primaryMuscle}
-                </span>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); onMenu() }}
-                className="text-zinc-500 active:text-white p-1 -mr-1"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          {isEditing ? (
-            <input
-              autoFocus
-              type="text"
-              value={exercise.setsReps}
-              onChange={(e) => onSetsRepsChange(e.target.value)}
-              onBlur={onEditDone}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-zinc-700 text-brand-silver text-sm rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-brand-red w-40 mt-0.5"
-              style={{ fontSize: '16px' }}
-            />
-          ) : (
-            <p className="text-brand-silver text-sm mt-0.5">{exercise.setsReps}</p>
-          )}
-          {!isActive && (
-            <>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {exercise.muscles.map((m) => (
-                  <span key={m} className={`text-xs px-2.5 py-1 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>{m}</span>
-                ))}
-              </div>
-              <div className="flex justify-end mt-1">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-zinc-500">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </div>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Expanded content */}
-      {isActive && (
-        <div className="px-4 pb-4">
-          <div className={`grid gap-x-2 px-1 mb-2 ${isEditing ? 'grid-cols-[28px_1fr_1fr_auto_20px]' : 'grid-cols-[28px_1fr_1fr_auto]'}`}>
-            <span className="text-xs text-zinc-500 font-medium">Set</span>
-            <span className="text-xs text-zinc-500 font-medium">Reps</span>
-            <span className="text-xs text-zinc-500 font-medium">Weight</span>
-            <span className="text-xs text-zinc-500 font-medium">Rating</span>
-            {isEditing && <span />}
-          </div>
-          <div className="flex flex-col gap-2">
-            {sets.map((set, i) => (
-              <div key={i} className={`grid gap-x-2 items-center ${isEditing ? 'grid-cols-[28px_1fr_1fr_auto_20px]' : 'grid-cols-[28px_1fr_1fr_auto]'}`}>
-                <span className="text-sm text-zinc-400 text-center">{i + 1}</span>
-                <input type="number" inputMode="numeric" placeholder="—" value={set.reps}
-                  onChange={(e) => updateSet(i, 'reps', e.target.value)}
-                  onBlur={() => i === 0 && autofillFromFirst('reps')}
-                  className="bg-zinc-700 text-white text-base text-center rounded-lg py-1.5 w-full outline-none focus:ring-1 focus:ring-brand-red placeholder-zinc-500"
-                  style={{ fontSize: '16px' }}
-                />
-                <div className="flex items-center bg-zinc-700 rounded-lg px-2 py-1.5">
-                  <input type="number" inputMode="decimal" placeholder="—" value={set.weight}
-                    onChange={(e) => updateSet(i, 'weight', e.target.value)}
-                    onBlur={() => i === 0 && autofillFromFirst('weight')}
-                    className="bg-transparent text-white text-base text-center w-full outline-none placeholder-zinc-500 min-w-0"
-                    style={{ fontSize: '16px' }}
-                  />
-                  <span className="text-zinc-500 text-xs ml-1 shrink-0">lbs</span>
-                </div>
-                <RatingWidget value={set.rating} onChange={(v) => onRating(i, v)} />
-                {isEditing && (
-                  <button
-                    onClick={() => onCardState({ sets: sets.filter((_, idx) => idx !== i) })}
-                    className="text-zinc-600 active:text-brand-red transition-colors text-base leading-none"
-                  >×</button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Rest / lap timer */}
-          {lapTime !== null && (
-            <div className="flex items-center justify-center gap-2 mt-4 py-2 rounded-xl bg-brand-black">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-brand-silver">
-                <circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15.5 15.5" />
-              </svg>
-              <span className="text-white font-mono text-sm">Rest {lapTime}</span>
-            </div>
-          )}
-
-          <button
-            onClick={() => onCardState({ sets: [...sets, { reps: '', weight: '', rating: 0 }] })}
-            className="w-full mt-3 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium active:bg-zinc-700 transition-colors"
-          >
-            + Add Set
-          </button>
-          <div className="flex gap-2 mt-3">
-            <button onClick={onArchives} className="flex-1 py-3 rounded-xl bg-zinc-700 text-white text-sm font-semibold active:bg-zinc-600 transition-colors">Archives</button>
-            <button onClick={markDone} className="flex-1 py-3 rounded-xl bg-brand-black text-white text-sm font-semibold active:bg-zinc-800 transition-colors">Done</button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── Add exercise picker ──────────────────────────────────────────────────────
 function AddExercisePicker({ currentExercises, onAdd, onClose }) {
   const [query, setQuery] = useState('')
@@ -415,7 +227,6 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
   const currentNames = new Set(currentExercises.map((e) => e.name))
 
   useEffect(() => {
-    // Small delay so the sheet finishes animating before keyboard pops
     const t = setTimeout(() => inputRef.current?.focus(), 100)
     return () => clearTimeout(t)
   }, [])
@@ -432,54 +243,34 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
     : EXERCISE_LIBRARY
 
   function handleAdd(libEx) {
-    onAdd({
-      name: libEx.name,
-      muscles: libEx.muscles,
-      setsReps: '3 × 10',
-    })
+    onAdd({ name: libEx.name, muscles: libEx.muscles, setsReps: '3 × 10' })
     onClose()
   }
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col justify-end">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
       <div className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]">
-        {/* Header + search */}
         <div className="px-4 pt-4 pb-3 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <span className="text-white font-semibold text-base">Add Exercise</span>
             <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
           </div>
           <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="w-4 h-4 text-zinc-500 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-zinc-500 shrink-0">
               <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
             </svg>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Search exercises…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm"
-              style={{ fontSize: '16px' }}
-            />
-            {query ? (
+            <input ref={inputRef} type="text" placeholder="Search exercises…" value={query} onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm" style={{ fontSize: '16px' }} />
+            {query && (
               <button onClick={() => setQuery('')} className="text-zinc-500 active:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-            ) : null}
+            )}
           </div>
         </div>
-
-        {/* Results */}
         <div className="overflow-y-auto pb-8 px-4">
           {results.length === 0 ? (
             <p className="text-zinc-500 text-sm text-center py-8">No exercises found</p>
@@ -488,25 +279,15 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
               {results.map((ex) => {
                 const alreadyAdded = currentNames.has(ex.name)
                 return (
-                  <button
-                    key={ex.name}
-                    onClick={() => !alreadyAdded && handleAdd(ex)}
-                    disabled={alreadyAdded}
-                    className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-colors ${
-                      alreadyAdded
-                        ? 'bg-brand-black opacity-40 cursor-default'
-                        : 'bg-zinc-800 active:bg-zinc-700'
-                    }`}
-                  >
+                  <button key={ex.name} onClick={() => !alreadyAdded && handleAdd(ex)} disabled={alreadyAdded}
+                    className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-colors ${alreadyAdded ? 'bg-brand-black opacity-40 cursor-default' : 'bg-zinc-800 active:bg-zinc-700'}`}>
                     <div className="min-w-0 mr-3">
                       <div className="text-white text-sm font-semibold truncate">{ex.name}</div>
                       <div className="text-zinc-500 text-xs mt-0.5">{ex.pattern} · {ex.equipment}</div>
                     </div>
                     <div className="flex flex-wrap gap-1 justify-end shrink-0 max-w-[130px]">
                       {ex.muscles.slice(0, 2).map((m) => (
-                        <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>
-                          {m}
-                        </span>
+                        <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>{m}</span>
                       ))}
                       {alreadyAdded && <span className="text-xs text-zinc-500">added</span>}
                     </div>
@@ -523,7 +304,7 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
 
 // ─── Exercise archives sheet ──────────────────────────────────────────────────
 function ExerciseArchivesSheet({ exerciseName, onClose }) {
-  const [entries, setEntries] = useState(null) // null = loading
+  const [entries, setEntries] = useState(null)
 
   useEffect(() => {
     getExerciseHistory(exerciseName).then(setEntries)
@@ -540,7 +321,6 @@ function ExerciseArchivesSheet({ exerciseName, onClose }) {
     <div className="absolute inset-0 z-30 flex flex-col justify-end">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]">
-        {/* Header */}
         <div className="px-4 pt-4 pb-3 shrink-0 border-b border-zinc-800">
           <div className="flex items-center justify-between">
             <div>
@@ -550,8 +330,6 @@ function ExerciseArchivesSheet({ exerciseName, onClose }) {
             <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
           </div>
         </div>
-
-        {/* Content */}
         <div className="overflow-y-auto pb-8 px-4 pt-3">
           {entries === null ? (
             <div className="flex justify-center py-12">
@@ -567,7 +345,6 @@ function ExerciseArchivesSheet({ exerciseName, onClose }) {
               {entries.map((entry, ei) => (
                 <div key={ei} className="bg-brand-black border border-white/10 rounded-2xl px-4 py-3">
                   <p className="text-zinc-400 text-xs font-medium mb-2">{formatDate(entry.date)}</p>
-                  {/* Column headers */}
                   <div className="grid grid-cols-[28px_1fr_1fr_auto] gap-x-3 px-1 mb-1.5">
                     <span className="text-xs text-zinc-600">Set</span>
                     <span className="text-xs text-zinc-600">Reps</span>
@@ -607,24 +384,221 @@ function makeCardState(exercise) {
   }
 }
 
+function fmtBigTimer(mmss) {
+  if (!mmss || mmss === '00:00') return '00:00:00'
+  const [mm, ss] = mmss.split(':').map(Number)
+  if (mm >= 60) {
+    const h = Math.floor(mm / 60)
+    return `${String(h).padStart(2, '0')}:${String(mm % 60).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+  }
+  return `00:${mmss}`
+}
+
+function fmtPrescription(setsReps) {
+  if (!setsReps) return setsReps
+  return setsReps.replace(/^(\d+)\s*[x×]\s*(.+)$/i, '$1 sets × $2 reps')
+}
+
+function fmtLapTimer(mmss) {
+  if (!mmss) return '00:00:00'
+  return mmss.length === 5 ? `00:${mmss}` : mmss
+}
+
+// ─── Workout queue tray ───────────────────────────────────────────────────────
+function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExercise, onClose, onOpenAddPicker, onReorder }) {
+  const [visible, setVisible] = useState(false)
+  const [draggingIdx, setDraggingIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
+  const draggingIdxRef = useRef(null)
+  const dragOverIdxRef = useRef(null)
+  const listRef = useRef(null)
+
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+
+  function dismiss() {
+    setVisible(false)
+    setTimeout(onClose, 280)
+  }
+
+  function handleAdd() {
+    setVisible(false)
+    setTimeout(() => { onClose(); onOpenAddPicker() }, 280)
+  }
+
+  function onDragHandleStart(e, idx) {
+    e.stopPropagation()
+    draggingIdxRef.current = idx
+    dragOverIdxRef.current = idx
+    setDraggingIdx(idx)
+    setDragOverIdx(idx)
+  }
+
+  useEffect(() => {
+    function onMove(e) {
+      if (draggingIdxRef.current === null) return
+      e.preventDefault()
+      e.stopPropagation()
+      const y = e.touches[0].clientY
+      const list = listRef.current
+      if (!list) return
+      const rows = list.querySelectorAll('[data-row]')
+      let target = rows.length - 1
+      for (let i = 0; i < rows.length; i++) {
+        const rect = rows[i].getBoundingClientRect()
+        if (y < rect.top + rect.height / 2) { target = i; break }
+      }
+      dragOverIdxRef.current = target
+      setDragOverIdx(target)
+    }
+    function onEnd() {
+      const from = draggingIdxRef.current
+      const to = dragOverIdxRef.current
+      if (from !== null && to !== null && from !== to) onReorder(from, to)
+      draggingIdxRef.current = null
+      dragOverIdxRef.current = null
+      setDraggingIdx(null)
+      setDragOverIdx(null)
+    }
+    document.addEventListener('touchmove', onMove, { passive: false })
+    document.addEventListener('touchend', onEnd)
+    return () => {
+      document.removeEventListener('touchmove', onMove)
+      document.removeEventListener('touchend', onEnd)
+    }
+  }, [onReorder])
+
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+      <div
+        className="absolute inset-0 bg-black/60"
+        style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.28s ease-out' }}
+        onClick={dismiss}
+      />
+      <div
+        className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800"
+        style={{
+          maxHeight: '70%',
+          transform: visible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.28s ease-out',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0 border-b border-zinc-800/60">
+          <span className="text-white font-semibold text-base">Workout Queue</span>
+          <button onClick={handleAdd} className="text-brand-red active:text-red-400 transition-colors text-sm font-semibold">
+            Add
+          </button>
+        </div>
+
+        {/* Exercise list */}
+        <div ref={listRef} className="overflow-y-auto pb-8">
+          {exercises.map((ex, i) => {
+            const state = cardStates[i]
+            const isCurrent = i === activeExercise
+            const ratedSets = state?.sets?.filter((s) => s.rating > 0).length ?? 0
+            const totalSets = state?.sets?.length ?? 0
+            const muscles = (ex.muscles ?? []).slice(0, 2)
+            const isDragging = draggingIdx === i
+            const isDropAbove = draggingIdx !== null && dragOverIdx === i && draggingIdx > i
+            const isDropBelow = draggingIdx !== null && dragOverIdx === i && draggingIdx < i
+
+            return (
+              <div
+                key={i}
+                data-row
+                className={`flex items-center transition-opacity ${isDragging ? 'opacity-30' : 'opacity-100'} ${isDropAbove ? 'border-t-2 border-brand-red' : ''} ${isDropBelow ? 'border-b-2 border-brand-red' : ''}`}
+              >
+                {/* Drag handle */}
+                <div
+                  className="shrink-0 pl-3 pr-1 py-4 touch-none text-zinc-700 active:text-zinc-400 cursor-grab"
+                  onTouchStart={(e) => onDragHandleStart(e, i)}
+                >
+                  <svg viewBox="0 0 10 16" fill="currentColor" className="w-3 h-4">
+                    <circle cx="2.5" cy="2" r="1.5" /><circle cx="7.5" cy="2" r="1.5" />
+                    <circle cx="2.5" cy="8" r="1.5" /><circle cx="7.5" cy="8" r="1.5" />
+                    <circle cx="2.5" cy="14" r="1.5" /><circle cx="7.5" cy="14" r="1.5" />
+                  </svg>
+                </div>
+
+                {/* Row content (tappable) */}
+                <button
+                  className={`flex-1 flex items-center gap-3 px-3 py-3 text-left active:bg-white/5 transition-colors ${isCurrent ? 'bg-white/5' : ''}`}
+                  onClick={() => { onSelectExercise(i); dismiss() }}
+                >
+                  {/* Status indicator */}
+                  <div className="shrink-0 w-6 h-6 flex items-center justify-center">
+                    {isCurrent ? (
+                      <div className="w-2 h-2 rounded-full bg-brand-red" />
+                    ) : ratedSets === totalSets && totalSets > 0 ? (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-400">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <span className="text-sm text-zinc-600 font-medium">{i + 1}</span>
+                    )}
+                  </div>
+
+                  {/* Name + muscles */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold truncate leading-tight ${isCurrent ? 'text-white' : ratedSets === totalSets && totalSets > 0 ? 'text-zinc-400' : 'text-white/80'}`}>
+                      {ex.name}
+                    </p>
+                    {muscles.length > 0 && (
+                      <p className="text-xs text-zinc-600 mt-0.5 truncate">{muscles.join(' · ')}</p>
+                    )}
+                  </div>
+
+                  {/* Sets progress */}
+                  <div className="shrink-0 text-right">
+                    <span className={`text-xs font-medium tabular-nums ${isCurrent ? 'text-brand-red' : 'text-zinc-600'}`}>
+                      {ratedSets}/{totalSets}
+                    </span>
+                    <p className="text-zinc-700 text-xs">sets</p>
+                  </div>
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Workout session ──────────────────────────────────────────────────────────
-export default function WorkoutSession({ routine, open, onClose, onFinish, timer }) {
+export default function WorkoutSession({ routine, open, onClose, onFinish, timer, paused, onPause, onResume, onMiniInfoChange }) {
   const [visible, setVisible] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [activeExercise, setActiveExercise] = useState(0)
+  const pauseStartRef = useRef(null)
+  const lapPausedElapsedRef = useRef(0)
+  const [showEditConfirm, setShowEditConfirm] = useState(false)
+  const [editSetsMode, setEditSetsMode] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [showQueue, setShowQueue] = useState(false)
   const [menuOpenIdx, setMenuOpenIdx] = useState(null)
   const [editingIdx, setEditingIdx] = useState(null)
   const [switchingIdx, setSwitchingIdx] = useState(null)
   const [archivesExercise, setArchivesExercise] = useState(null)
 
-  // exercises + per-card state — persists across open/close, resets only on new session
   const [exercises, setExercises] = useState([])
   const [cardStates, setCardStates] = useState([])
   const prevRoutineId = useRef(null)
 
-  // Init/reset only when a new routine starts, not on open/close toggle
+  // ─── Derived current exercise ─────────────────────────────────────────────
+  const currentEx = exercises[activeExercise] ?? null
+  const currentState = cardStates[activeExercise] ?? (currentEx ? makeCardState(currentEx) : { sets: [], done: false, lapStartedAt: null })
+  const lapTime = useLapClock(currentState.lapStartedAt ?? null)
+
+  useEffect(() => {
+    if (!onMiniInfoChange || !currentEx) return
+    const nextSetIdx = currentState.sets.findIndex((s) => !s.reps && s.rating === 0)
+    const setNum = nextSetIdx === -1 ? currentState.sets.length : nextSetIdx + 1
+    onMiniInfoChange({ name: currentEx.name, setLabel: `set ${setNum}` })
+  }, [currentEx, currentState.sets, onMiniInfoChange])
+
+  // ─── Session init / restore ───────────────────────────────────────────────
   useEffect(() => {
     if (!routine) return
     if (routine.id !== prevRoutineId.current) {
@@ -647,38 +621,27 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     }
   }, [routine])
 
-  // Auto-save session state on every change
+  // ─── Auto-save ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!routine || exercises.length === 0) return
     localStorage.setItem(SESSION_KEY, JSON.stringify({
-      routineId: routine.id,
-      routine,
-      exercises,
-      cardStates,
-      activeExercise,
+      routineId: routine.id, routine, exercises, cardStates, activeExercise,
       startedAt: localStorage.getItem(TIMER_KEY),
     }))
   }, [routine, exercises, cardStates, activeExercise])
 
-  // Keep a ref with the latest session state so pagehide/visibilitychange
-  // handlers always capture the most recent values (avoids stale closures).
   const sessionRef = useRef(null)
   useEffect(() => {
     sessionRef.current = { routine, exercises, cardStates, activeExercise }
   }, [routine, exercises, cardStates, activeExercise])
 
-  // Force-save to localStorage on iOS backgrounding / page hide.
-  // These events fire even when iOS is about to suspend or kill the process.
   useEffect(() => {
     function forceSave() {
       const s = sessionRef.current
       if (!s?.routine || !s.exercises?.length) return
       localStorage.setItem(SESSION_KEY, JSON.stringify({
-        routineId: s.routine.id,
-        routine: s.routine,
-        exercises: s.exercises,
-        cardStates: s.cardStates,
-        activeExercise: s.activeExercise,
+        routineId: s.routine.id, routine: s.routine, exercises: s.exercises,
+        cardStates: s.cardStates, activeExercise: s.activeExercise,
         startedAt: localStorage.getItem(TIMER_KEY),
       }))
     }
@@ -691,28 +654,40 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     }
   }, [])
 
-  // Debounced Supabase cloud backup — fires 4s after the last state change.
-  // This is a safety net: if iOS clears localStorage, the session can be
-  // recovered from Supabase on the next launch.
   const syncTimerRef = useRef(null)
   useEffect(() => {
     if (!routine || exercises.length === 0) return
     clearTimeout(syncTimerRef.current)
     syncTimerRef.current = setTimeout(() => {
-      saveActiveSession({
-        routineId: routine.id,
-        routine,
-        exercises,
-        cardStates,
-        activeExercise,
-        startedAt: localStorage.getItem(TIMER_KEY),
-      }).catch(() => {})
+      saveActiveSession({ routineId: routine.id, routine, exercises, cardStates, activeExercise, startedAt: localStorage.getItem(TIMER_KEY) }).catch(() => {})
     }, 4000)
     return () => clearTimeout(syncTimerRef.current)
   }, [routine, exercises, cardStates, activeExercise])
 
+  // ─── State mutations ──────────────────────────────────────────────────────
   function updateCardState(i, patch) {
     setCardStates((prev) => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
+  }
+
+  function updateCurrentSet(setIdx, field, value) {
+    const newSets = currentState.sets.map((s, i) => i === setIdx ? { ...s, [field]: value } : s)
+    updateCardState(activeExercise, { sets: newSets })
+  }
+
+  function autofillCurrentFromFirst(field) {
+    const firstVal = currentState.sets[0]?.[field]
+    if (!firstVal) return
+    const filled = currentState.sets.map((s, i) => i > 0 && !s[field] ? { ...s, [field]: firstVal } : s)
+    updateCardState(activeExercise, { sets: filled })
+  }
+
+  function addSetToCurrent() {
+    updateCardState(activeExercise, { sets: [...currentState.sets, { reps: '', weight: '', rating: 0 }] })
+  }
+
+  function rateCurrentSet(setIdx, rating) {
+    const newSets = currentState.sets.map((s, i) => i === setIdx ? { ...s, rating } : s)
+    updateCardState(activeExercise, { sets: newSets, lapStartedAt: rating > 0 ? Date.now() : currentState.lapStartedAt })
   }
 
   function updateSetsReps(i, setsReps) {
@@ -726,6 +701,27 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     setMenuOpenIdx(null)
   }
 
+  function reorderExercises(from, to) {
+    setExercises((prev) => {
+      const arr = [...prev]
+      const [item] = arr.splice(from, 1)
+      arr.splice(to, 0, item)
+      return arr
+    })
+    setCardStates((prev) => {
+      const arr = [...prev]
+      const [item] = arr.splice(from, 1)
+      arr.splice(to, 0, item)
+      return arr
+    })
+    setActiveExercise((active) => {
+      if (active === from) return to
+      if (from < to && active > from && active <= to) return active - 1
+      if (from > to && active >= to && active < from) return active + 1
+      return active
+    })
+  }
+
   function switchExercise(i, libEx) {
     setExercises((prev) => prev.map((ex, idx) =>
       idx === i ? { name: libEx.name, muscles: libEx.muscles, setsReps: ex.setsReps } : ex
@@ -734,7 +730,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     setMenuOpenIdx(null)
   }
 
-  // Sheet slide animation
+  // ─── Sheet animation + dismiss ────────────────────────────────────────────
   useEffect(() => {
     if (open) requestAnimationFrame(() => setVisible(true))
     else { setVisible(false); setDragY(0) }
@@ -746,76 +742,6 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     setTimeout(onClose, 300)
   }
 
-  // Drag-to-reorder
-  const [dragIndex, setDragIndex] = useState(null)
-  const [dropIndex, setDropIndex] = useState(null)
-  const cardRefs = useRef([])
-  const dragIndexRef = useRef(null)
-  const dropIndexRef = useRef(null)
-  const isDraggingItem = useRef(false)
-
-  function getDropIndex(clientY) {
-    let idx = exercises.length
-    for (let i = 0; i < cardRefs.current.length; i++) {
-      const el = cardRefs.current[i]
-      if (!el) continue
-      const rect = el.getBoundingClientRect()
-      if (clientY < rect.top + rect.height / 2) { idx = i; break }
-    }
-    return idx
-  }
-
-  function makeDragHandleProps(index) {
-    return {
-      ref(el) {
-        if (!el) return
-        el._onTouchMove = (e) => {
-          if (dragIndexRef.current === null) return
-          e.stopPropagation()
-          e.preventDefault()
-          const newDrop = getDropIndex(e.touches[0].clientY)
-          dropIndexRef.current = newDrop
-          setDropIndex(newDrop)
-        }
-        el.removeEventListener('touchmove', el._onTouchMove)
-        el.addEventListener('touchmove', el._onTouchMove, { passive: false })
-      },
-      onTouchStart(e) {
-        e.stopPropagation()
-        isDraggingItem.current = true
-        dragIndexRef.current = index
-        dropIndexRef.current = index
-        setDragIndex(index)
-        setDropIndex(index)
-      },
-      onTouchEnd(e) {
-        e.stopPropagation()
-        const di = dragIndexRef.current
-        const dri = dropIndexRef.current
-        if (di !== null && dri !== null && di !== dri) {
-          setExercises((prev) => {
-            const arr = [...prev]
-            const [item] = arr.splice(di, 1)
-            arr.splice(Math.max(0, dri > di ? dri - 1 : dri), 0, item)
-            return arr
-          })
-          setCardStates((prev) => {
-            const arr = [...prev]
-            const [item] = arr.splice(di, 1)
-            arr.splice(Math.max(0, dri > di ? dri - 1 : dri), 0, item)
-            return arr
-          })
-        }
-        dragIndexRef.current = null
-        dropIndexRef.current = null
-        setDragIndex(null)
-        setDropIndex(null)
-        isDraggingItem.current = false
-      },
-    }
-  }
-
-  // Sheet dismiss touch
   const sheetRef = useRef(null)
   const dismissStartY = useRef(null)
   const dismissDragging = useRef(false)
@@ -824,7 +750,6 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     const el = sheetRef.current
     if (!el || !open) return
     function onStart(e) {
-      if (isDraggingItem.current) return
       const scrollEl = el.querySelector('.session-scroll')
       if (!scrollEl || scrollEl.scrollTop === 0) {
         dismissStartY.current = e.touches[0].clientY
@@ -832,14 +757,12 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
       }
     }
     function onMove(e) {
-      if (isDraggingItem.current) return
       e.stopPropagation()
       if (!dismissDragging.current) return
       const delta = e.touches[0].clientY - dismissStartY.current
       if (delta > 0) { e.preventDefault(); setDragY(delta) }
     }
     function onEnd(e) {
-      if (isDraggingItem.current) return
       e.stopPropagation()
       if (dismissDragging.current) {
         setDragY((dy) => {
@@ -860,41 +783,6 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     }
   }, [open, onClose])
 
-  function renderExercises() {
-    const items = []
-    exercises.forEach((ex, i) => {
-      if (dropIndex === i && dragIndex !== null && dragIndex !== i)
-        items.push(<div key={`drop-${i}`} className="h-1 rounded-full bg-brand-red mx-2" />)
-      const isBeingDragged = dragIndex === i
-      items.push(
-        <div
-          key={ex.name}
-          ref={(el) => (cardRefs.current[i] = el)}
-          className={`transition-transform duration-150 ${isBeingDragged ? 'scale-[1.03] relative z-10' : 'scale-100'}`}
-          style={isBeingDragged ? { filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.7))' } : undefined}
-        >
-          <ExerciseCard
-            exercise={ex}
-            cardState={cardStates[i] ?? makeCardState(ex)}
-            onCardState={(patch) => updateCardState(i, patch)}
-            isActive={activeExercise === i}
-            onActivate={() => setActiveExercise(activeExercise === i ? null : i)}
-            dragHandleProps={makeDragHandleProps(i)}
-            isDragging={isBeingDragged}
-            onMenu={() => setMenuOpenIdx(i)}
-            isEditing={editingIdx === i}
-            onSetsRepsChange={(val) => updateSetsReps(i, val)}
-            onEditDone={() => setEditingIdx(null)}
-            onArchives={() => setArchivesExercise(ex.name)}
-          />
-        </div>
-      )
-    })
-    if (dropIndex === exercises.length && dragIndex !== null)
-      items.push(<div key="drop-end" className="h-1 rounded-full bg-brand-red mx-2" />)
-    return items
-  }
-
   if (!open || !routine) return null
 
   const translateStyle = visible
@@ -902,35 +790,300 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
     : { transform: 'translateY(100%)', transition: 'transform 0.3s ease-out' }
 
   return (
-    <div className="absolute inset-0 z-70 flex flex-col justify-end pointer-events-none">
-      <div ref={sheetRef} className="pointer-events-auto flex flex-col bg-brand-black"
-        style={{ height: '100%', ...translateStyle }}>
-        {/* Top bar — chevron only */}
-        <div className="px-4 pb-2 shrink-0 safe-top">
-          <button onClick={handleClose} className="text-brand-silver active:text-white transition-colors p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between px-5 pb-3 shrink-0">
-          <h1 className="text-lg font-bold text-white">{routine.label}</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-white font-mono text-base">{timer}</span>
-            <button onClick={() => setShowSummary(true)} className="bg-brand-red text-white text-sm font-semibold px-5 py-2 rounded-full active:bg-brand-crimson transition-colors">
-              Finish
+    <div className="fixed inset-0 flex flex-col justify-end pointer-events-none" style={{ zIndex: 60 }}>
+      <div
+        ref={sheetRef}
+        className="pointer-events-auto flex flex-col bg-brand-black"
+        style={{ height: '100%', ...translateStyle }}
+      >
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <div className="relative shrink-0">
+          {/* Top row: dismiss + timer + menu */}
+          <div className="flex items-center justify-between px-4 safe-top pt-3 pb-1">
+            <button
+              onClick={handleClose}
+              className="text-white/50 active:text-white transition-colors p-2 -ml-1 shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
+            <span className="text-5xl text-white font-bold tracking-normal" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums' }}>
+              {fmtBigTimer(timer)}
+            </span>
+            <button
+              onClick={() => currentEx && setShowEditConfirm(true)}
+              className="text-white/50 active:text-white transition-colors p-2 -mr-1 shrink-0"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Lap timer */}
+          <div className="flex justify-center pt-1 pb-4">
+            <span className="text-lg tracking-wider" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.55)' }}>
+              {fmtLapTimer(lapTime)}
+            </span>
           </div>
         </div>
 
-        <div className="session-scroll flex-1 overflow-y-auto px-4 pb-8">
-          <div className="flex flex-col gap-3">{renderExercises()}</div>
-          <button onClick={() => setShowPicker(true)}
-            className="w-full mt-4 py-3 rounded-2xl border border-zinc-700 text-zinc-400 text-sm font-medium active:bg-zinc-800 transition-colors">
-            + Add Exercise
-          </button>
+        {/* ── Exercise content ─────────────────────────────────────── */}
+        <div className="session-scroll flex-1 overflow-y-auto px-5 pt-2 pb-4">
+          {currentEx ? (
+            <>
+              {/* Name */}
+              <h2 className="text-3xl font-bold text-white leading-tight mb-1">
+                {currentEx.name}
+              </h2>
+
+              {/* Prescription — tap to edit via menu */}
+              {editingIdx === activeExercise ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={currentEx.setsReps}
+                  onChange={(e) => updateSetsReps(activeExercise, e.target.value)}
+                  onBlur={() => setEditingIdx(null)}
+                  className="bg-zinc-800 text-zinc-300 text-sm rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-brand-red w-44 mb-7"
+                  style={{ fontSize: '16px' }}
+                />
+              ) : (
+                <p className="text-zinc-400 text-sm mb-6 active:text-white/60 transition-colors" onClick={() => setEditingIdx(activeExercise)}>{fmtPrescription(currentEx.setsReps)}</p>
+              )}
+
+              {/* Column headers */}
+              <div className="grid grid-cols-[36px_56px_1fr_128px] gap-x-3 px-1 mb-3">
+                <span className="text-xs text-zinc-500 font-medium text-center">Set</span>
+                <span className="text-xs text-zinc-500 font-medium text-center">Reps</span>
+                <span className="text-xs text-zinc-500 font-medium text-center">Weight</span>
+                <span className="text-xs text-zinc-500 font-medium">Rating</span>
+              </div>
+
+              {/* Set rows */}
+              <div className="flex flex-col gap-3">
+                {currentState.sets.map((set, i) => (
+                  <div key={i} className="grid grid-cols-[36px_56px_1fr_128px] gap-x-3 items-center">
+                    {editSetsMode ? (
+                      <button
+                        onClick={() => {
+                          const newSets = currentState.sets.filter((_, si) => si !== i)
+                          updateCardState(activeExercise, { sets: newSets })
+                        }}
+                        className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-red/20 text-brand-red active:bg-brand-red active:text-white transition-colors mx-auto"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <span className="text-base text-zinc-400 text-center">{i + 1}</span>
+                    )}
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={set.reps}
+                      onChange={(e) => updateCurrentSet(i, 'reps', e.target.value)}
+                      onBlur={() => i === 0 && autofillCurrentFromFirst('reps')}
+                      className="w-14 bg-zinc-800 text-white text-base text-center rounded-full py-2.5 outline-none focus:ring-2 focus:ring-brand-red placeholder-zinc-600"
+                      style={{ fontSize: '16px' }}
+                    />
+                    <div className="flex items-center bg-zinc-800 rounded-full px-4 py-2.5">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="—"
+                        value={set.weight}
+                        onChange={(e) => updateCurrentSet(i, 'weight', e.target.value)}
+                        onBlur={() => i === 0 && autofillCurrentFromFirst('weight')}
+                        className="bg-transparent text-white text-base text-center w-full outline-none placeholder-zinc-600 min-w-0"
+                        style={{ fontSize: '16px' }}
+                      />
+                      <span className="text-zinc-500 text-xs ml-1 shrink-0">lbs</span>
+                    </div>
+                    <RatingWidget value={set.rating} onChange={(v) => rateCurrentSet(i, v)} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Add set / Done */}
+              {editSetsMode ? (
+                <button
+                  onClick={() => setEditSetsMode(false)}
+                  className="w-full mt-7 py-3.5 rounded-full bg-zinc-800 text-white text-sm font-semibold active:bg-zinc-700 transition-colors"
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  onClick={addSetToCurrent}
+                  className="w-full mt-7 py-3.5 rounded-full border border-dashed border-zinc-700 text-zinc-500 text-sm font-medium active:bg-zinc-800/50 transition-colors"
+                >
+                  + Add set
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="text-zinc-500 text-center py-12 text-sm">No exercises in this session</p>
+          )}
         </div>
+
+        {/* ── Bottom controls ──────────────────────────────────────── */}
+        <div className="shrink-0 px-6 pt-2">
+          {/* Prev | Pause/Resume+Finish | Next */}
+          <div className="grid grid-cols-[72px_1fr_72px] items-center mb-2">
+            <button
+              onClick={() => setActiveExercise((i) => Math.max(0, i - 1))}
+              disabled={activeExercise === 0}
+              className="w-16 h-16 flex items-center justify-center text-white/60 active:text-white disabled:opacity-25 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-14 h-14">
+                <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+              </svg>
+            </button>
+
+            <div className="flex justify-center overflow-hidden">
+            {paused ? (
+              <div key="split" className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const pauseDuration = Date.now() - (pauseStartRef.current ?? Date.now())
+                    const start = Number(localStorage.getItem(TIMER_KEY) ?? Date.now())
+                    localStorage.setItem(TIMER_KEY, String(start + pauseDuration))
+                    pauseStartRef.current = null
+                    if (lapPausedElapsedRef.current > 0) {
+                      updateCardState(activeExercise, { lapStartedAt: Date.now() - lapPausedElapsedRef.current })
+                      lapPausedElapsedRef.current = 0
+                    }
+                    onResume()
+                  }}
+                  className="anim-split-left font-semibold text-sm text-white px-5 py-4 rounded-full bg-zinc-700 active:bg-zinc-600"
+                >
+                  Resume
+                </button>
+                <button
+                  onClick={() => {
+                    const pauseDuration = Date.now() - (pauseStartRef.current ?? Date.now())
+                    const start = Number(localStorage.getItem(TIMER_KEY) ?? Date.now())
+                    localStorage.setItem(TIMER_KEY, String(start + pauseDuration))
+                    pauseStartRef.current = null
+                    lapPausedElapsedRef.current = 0
+                    onResume()
+                    setShowSummary(true)
+                  }}
+                  className="anim-split-right font-semibold text-sm text-white px-5 py-4 rounded-full bg-brand-red active:bg-brand-crimson"
+                >
+                  Finish
+                </button>
+              </div>
+            ) : (
+              <button
+                key="pause"
+                onClick={() => {
+                  pauseStartRef.current = Date.now()
+                  if (currentState.lapStartedAt) {
+                    lapPausedElapsedRef.current = Date.now() - currentState.lapStartedAt
+                    updateCardState(activeExercise, { lapStartedAt: null })
+                  }
+                  onPause()
+                }}
+                className="anim-merge-in flex items-center gap-2.5 bg-brand-red text-white px-10 py-4 rounded-full active:bg-brand-crimson font-semibold text-base"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                  <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+                Pause
+              </button>
+            )}
+            </div>
+
+            <button
+              onClick={() => setActiveExercise((i) => Math.min(exercises.length - 1, i + 1))}
+              disabled={activeExercise === exercises.length - 1}
+              className="w-16 h-16 flex items-center justify-center text-white/60 active:text-white disabled:opacity-25 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-14 h-14">
+                <path d="M6 18 14.5 12 6 6v12zm9.5-12v12h2V6h-2z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Archives (left) | Finish + Menu (right) */}
+          <div className="flex items-center justify-between" style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom))' }}>
+            <button
+              onClick={() => currentEx && setArchivesExercise(currentEx.name)}
+              className="p-2 -ml-1 text-zinc-500 active:text-white transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                <path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                className="p-2 text-zinc-500 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => setShowQueue(true)}
+                className="p-2 -mr-1 text-zinc-500 active:text-white transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Edit confirm popup ───────────────────────────────────── */}
+        {showEditConfirm && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center px-8" onClick={() => setShowEditConfirm(false)}>
+            <div className="w-full bg-zinc-900 border border-white/10 rounded-2xl px-5 py-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <p className="text-white font-semibold text-base mb-1">Edit exercise</p>
+              <p className="text-zinc-400 text-sm mb-5">You can remove sets from the current exercise.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowEditConfirm(false)}
+                  className="flex-1 py-3 rounded-full bg-zinc-800 text-white text-sm font-semibold active:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setShowEditConfirm(false); setEditSetsMode(true) }}
+                  className="flex-1 py-3 rounded-full bg-brand-red text-white text-sm font-semibold active:bg-brand-crimson transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Sub-sheets ───────────────────────────────────────────── */}
+        {showQueue && (
+          <WorkoutQueueTray
+            exercises={exercises}
+            cardStates={cardStates}
+            activeExercise={activeExercise}
+            onSelectExercise={setActiveExercise}
+            onClose={() => setShowQueue(false)}
+            onOpenAddPicker={() => setShowPicker(true)}
+            onReorder={reorderExercises}
+          />
+        )}
 
         {showPicker && (
           <AddExercisePicker
@@ -945,6 +1098,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
 
         {menuOpenIdx !== null && (
           <ExerciseMenu
+            onAdd={() => { setShowPicker(true); setMenuOpenIdx(null) }}
             onEdit={() => { setEditingIdx(menuOpenIdx); setMenuOpenIdx(null) }}
             onSwitch={() => { setSwitchingIdx(menuOpenIdx); setMenuOpenIdx(null) }}
             onRemove={() => removeExercise(menuOpenIdx)}

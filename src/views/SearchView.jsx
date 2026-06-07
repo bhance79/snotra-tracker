@@ -154,7 +154,7 @@ export default function SearchView() {
     <div ref={containerRef} className="flex flex-col pb-4">
       {/* Sticky header */}
       <div className="sticky top-0 bg-brand-black px-4 safe-top z-10">
-        <h1 className="text-2xl font-bold text-white py-4 text-center">Library</h1>
+        <h1 className="text-2xl font-bold text-white py-4 text-center font-baskerville">Library</h1>
 
         {/* Search bar */}
         <div className="flex items-center gap-2 bg-brand-black rounded-2xl px-4 py-3 mb-3 border border-zinc-800">

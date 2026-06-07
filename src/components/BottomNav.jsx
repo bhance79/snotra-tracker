@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 export default function BottomNav({ active, onChange, sessionActive = false }) {
   return (
     <nav
-      className="fixed left-4 right-4 h-16 bg-zinc-900/95 backdrop-blur-sm rounded-full flex items-center justify-around shadow-xl border border-zinc-800 z-50"
+      className="fixed left-4 right-4 h-16 bg-white/8 backdrop-blur-xl rounded-full flex items-center justify-around border border-white/10 z-50"
       style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       {NAV_ITEMS.map(({ id, outline, filled }) => {
@@ -29,9 +29,6 @@ export default function BottomNav({ active, onChange, sessionActive = false }) {
               className="relative flex items-center justify-center w-12 h-12"
               aria-label="Record"
             >
-              {sessionActive && (
-                <span className="absolute inset-0 rounded-full bg-brand-red/20 animate-ping" />
-              )}
               <span className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all ${
                 recordActive ? 'bg-brand-red text-white' : 'text-brand-silver'
               }`}>

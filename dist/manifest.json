@@ -4,19 +4,13 @@
   "description": "A mobile-first fitness tracker",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#222222",
+  "theme_color": "#222222",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "/images/snotranewicon.png",
+      "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
     }

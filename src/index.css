@@ -8,6 +8,7 @@
 
 body {
   overscroll-behavior: none;
+  overflow-x: hidden;
 }
 
 .safe-top {
@@ -18,6 +19,21 @@ body {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
+@keyframes slideFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.slide-from-right {
+  animation: slideFromRight 0.18s ease-out both;
+}
+.slide-from-left {
+  animation: slideFromLeft 0.18s ease-out both;
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -25,6 +41,26 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Pause ↔ Resume/Finish split animation */
+@keyframes splitLeft {
+  0%   { transform: translateX(28px) scaleX(0.45); opacity: 0; }
+  60%  { transform: translateX(-3px) scaleX(1.06); opacity: 1; }
+  100% { transform: translateX(0)    scaleX(1);    opacity: 1; }
+}
+@keyframes splitRight {
+  0%   { transform: translateX(-28px) scaleX(0.45); opacity: 0; }
+  60%  { transform: translateX(3px)   scaleX(1.06); opacity: 1; }
+  100% { transform: translateX(0)     scaleX(1);    opacity: 1; }
+}
+@keyframes mergeIn {
+  0%   { transform: scaleX(0.5) scaleY(0.85); opacity: 0; }
+  65%  { transform: scaleX(1.07) scaleY(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.anim-split-left  { animation: splitLeft  0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-split-right { animation: splitRight 0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-merge-in    { animation: mergeIn    0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
 
 /* Remove number input spinners */
 input[type='number']::-webkit-inner-spin-button,

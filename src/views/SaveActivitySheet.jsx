@@ -38,14 +38,14 @@ export default function SaveActivitySheet({ open, routine, exercises, cardStates
             className="text-brand-silver active:text-white transition-colors text-sm font-medium px-1">
             Resume
           </button>
-          <span className="text-xl text-white font-semibold">Save Activity</span>
+          <span className="text-xl text-white font-semibold font-baskerville">Save Activity</span>
           <div className="w-16" />
         </div>
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {/* Routine title */}
-          <h1 className="text-lg font-bold text-white mt-4 mb-4">{routine.label} Workout</h1>
+          <h1 className="text-lg font-bold text-white mt-4 mb-4 font-baskerville">{routine.label} Workout</h1>
 
           {/* Notes */}
           <textarea

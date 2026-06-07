@@ -7,12 +7,16 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        baskerville: ['"Libre Baskerville"', 'serif'],
+      },
       colors: {
         brand: {
           red: '#D91B24',
           crimson: '#761F21',
           silver: '#C4C4C4',
-          black: '#111111',
+          black: '#121212',
+          card: '#242424',
         },
       },
     },

@@ -19,17 +19,17 @@ export const EXERCISE_LIBRARY = [
   { name: 'Cable Chest Fly',            category: 'Chest',     muscles: ['chest'],                                    tier: 3, liftType: 'isolation',  pattern: 'fly',             equipment: 'cable' },
 
   // ── SHOULDERS ──────────────────────────────────────────────────────────────
-  { name: 'Overhead Barbell Press',     category: 'Shoulders', muscles: ['shoulders', 'triceps'],                     tier: 1, liftType: 'compound',   pattern: 'vertical push',   equipment: 'barbell' },
-  { name: 'Standing OHP',               category: 'Shoulders', muscles: ['shoulders', 'triceps', 'core'],             tier: 1, liftType: 'compound',   pattern: 'vertical push',   equipment: 'barbell' },
-  { name: 'Dumbbell Shoulder Press',    category: 'Shoulders', muscles: ['shoulders', 'triceps'],                     tier: 2, liftType: 'accessory',  pattern: 'vertical push',   equipment: 'dumbbell' },
-  { name: 'Arnold Press',               category: 'Shoulders', muscles: ['shoulders', 'triceps'],                     tier: 2, liftType: 'accessory',  pattern: 'vertical push',   equipment: 'dumbbell' },
-  { name: 'Cable Upright Row',          category: 'Shoulders', muscles: ['shoulders', 'traps'],                       tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
-  { name: 'Face Pull',                  category: 'Shoulders', muscles: ['shoulders', 'traps'],                       tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'cable' },
-  { name: 'Lateral Raise',              category: 'Shoulders', muscles: ['shoulders'],                                tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'dumbbell' },
-  { name: 'Cable Lateral Raise',        category: 'Shoulders', muscles: ['shoulders'],                                tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'cable' },
-  { name: 'Front Raise',                category: 'Shoulders', muscles: ['shoulders'],                                tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'dumbbell' },
-  { name: 'Plate Raise',                category: 'Shoulders', muscles: ['shoulders'],                                tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'plate' },
-  { name: 'Rear Delt Fly',              category: 'Shoulders', muscles: ['shoulders'],                                tier: 3, liftType: 'isolation',  pattern: 'fly',             equipment: 'dumbbell/machine' },
+  { name: 'Overhead Barbell Press',     category: 'Shoulders', muscles: ['front delts', 'side delts', 'triceps'],                 tier: 1, liftType: 'compound',   pattern: 'vertical push',   equipment: 'barbell' },
+  { name: 'Standing OHP',               category: 'Shoulders', muscles: ['front delts', 'side delts', 'triceps', 'core'],         tier: 1, liftType: 'compound',   pattern: 'vertical push',   equipment: 'barbell' },
+  { name: 'Dumbbell Shoulder Press',    category: 'Shoulders', muscles: ['front delts', 'side delts', 'triceps'],                 tier: 2, liftType: 'accessory',  pattern: 'vertical push',   equipment: 'dumbbell' },
+  { name: 'Arnold Press',               category: 'Shoulders', muscles: ['front delts', 'side delts', 'triceps'],                 tier: 2, liftType: 'accessory',  pattern: 'vertical push',   equipment: 'dumbbell' },
+  { name: 'Cable Upright Row',          category: 'Shoulders', muscles: ['side delts', 'traps'],                                  tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
+  { name: 'Face Pull',                  category: 'Shoulders', muscles: ['rear delts', 'traps'],                                  tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'cable' },
+  { name: 'Lateral Raise',              category: 'Shoulders', muscles: ['side delts'],                                           tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'dumbbell' },
+  { name: 'Cable Lateral Raise',        category: 'Shoulders', muscles: ['side delts'],                                           tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'cable' },
+  { name: 'Front Raise',                category: 'Shoulders', muscles: ['front delts'],                                          tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'dumbbell' },
+  { name: 'Plate Raise',                category: 'Shoulders', muscles: ['front delts'],                                          tier: 3, liftType: 'isolation',  pattern: 'raise',           equipment: 'plate' },
+  { name: 'Rear Delt Fly',              category: 'Shoulders', muscles: ['rear delts'],                                           tier: 3, liftType: 'isolation',  pattern: 'fly',             equipment: 'dumbbell/machine' },
 
   // ── ARMS — TRICEPS ─────────────────────────────────────────────────────────
   { name: 'Close-Grip Bench Press',     category: 'Arms',      muscles: ['triceps', 'chest'],                         tier: 1, liftType: 'compound',   pattern: 'horizontal push', equipment: 'barbell' },
@@ -51,20 +51,20 @@ export const EXERCISE_LIBRARY = [
   { name: 'Hammer Curl',                category: 'Arms',      muscles: ['biceps', 'brachialis'],                     tier: 3, liftType: 'isolation',  pattern: 'curl',            equipment: 'dumbbell/rope' },
 
   // ── BACK — HORIZONTAL PULL ────────────────────────────────────────────────
-  { name: 'Barbell Row',                category: 'Back',      muscles: ['back', 'lats'],                             tier: 1, liftType: 'compound',   pattern: 'horizontal pull', equipment: 'barbell' },
-  { name: 'T-Bar Row',                  category: 'Back',      muscles: ['back', 'lats'],                             tier: 1, liftType: 'compound',   pattern: 'horizontal pull', equipment: 'machine/barbell' },
-  { name: 'Landmine Row',               category: 'Back',      muscles: ['back', 'lats'],                             tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'barbell' },
-  { name: 'Seated Cable Row',           category: 'Back',      muscles: ['back'],                                     tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'cable' },
-  { name: 'Single Arm DB Row',          category: 'Back',      muscles: ['back'],                                     tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'dumbbell' },
-  { name: 'Inverted Row',               category: 'Back',      muscles: ['back'],                                     tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'bodyweight' },
-  { name: 'Incline Seal Row',           category: 'Back',      muscles: ['back'],                                     tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'dumbbell' },
-  { name: 'Back Extension',             category: 'Back',      muscles: ['back', 'erectors', 'glutes'],               tier: 2, liftType: 'accessory',  pattern: 'hinge',           equipment: 'bodyweight' },
+  { name: 'Barbell Row',                category: 'Back',      muscles: ['lats', 'rhomboids', 'traps'],               tier: 1, liftType: 'compound',   pattern: 'horizontal pull', equipment: 'barbell' },
+  { name: 'T-Bar Row',                  category: 'Back',      muscles: ['lats', 'rhomboids', 'traps'],               tier: 1, liftType: 'compound',   pattern: 'horizontal pull', equipment: 'machine/barbell' },
+  { name: 'Landmine Row',               category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'barbell' },
+  { name: 'Seated Cable Row',           category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'cable' },
+  { name: 'Single Arm DB Row',          category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'dumbbell' },
+  { name: 'Inverted Row',               category: 'Back',      muscles: ['lats', 'rhomboids', 'rear delts'],          tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'bodyweight' },
+  { name: 'Incline Seal Row',           category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 2, liftType: 'accessory',  pattern: 'horizontal pull', equipment: 'dumbbell' },
+  { name: 'Back Extension',             category: 'Back',      muscles: ['erectors', 'glutes'],                       tier: 2, liftType: 'accessory',  pattern: 'hinge',           equipment: 'bodyweight' },
 
   // ── BACK — VERTICAL PULL ──────────────────────────────────────────────────
-  { name: 'Pull-Ups',                   category: 'Back',      muscles: ['back', 'lats'],                             tier: 1, liftType: 'compound',   pattern: 'vertical pull',   equipment: 'bodyweight' },
-  { name: 'V-Bar Pullups',              category: 'Back',      muscles: ['back', 'lats'],                             tier: 1, liftType: 'compound',   pattern: 'vertical pull',   equipment: 'bodyweight' },
-  { name: 'Wide Grip Pulldown',         category: 'Back',      muscles: ['back', 'lats'],                             tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
-  { name: 'Close Grip Pulldown',        category: 'Back',      muscles: ['back', 'lats'],                             tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
+  { name: 'Pull-Ups',                   category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 1, liftType: 'compound',   pattern: 'vertical pull',   equipment: 'bodyweight' },
+  { name: 'V-Bar Pullups',              category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 1, liftType: 'compound',   pattern: 'vertical pull',   equipment: 'bodyweight' },
+  { name: 'Wide Grip Pulldown',         category: 'Back',      muscles: ['lats'],                                     tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
+  { name: 'Close Grip Pulldown',        category: 'Back',      muscles: ['lats', 'rhomboids'],                        tier: 2, liftType: 'accessory',  pattern: 'vertical pull',   equipment: 'cable' },
 
   // ── LEGS — QUAD DOMINANT ──────────────────────────────────────────────────
   { name: 'Barbell Back Squat',         category: 'Legs',      muscles: ['quads', 'glutes'],                          tier: 1, liftType: 'compound',   pattern: 'squat',           equipment: 'barbell' },

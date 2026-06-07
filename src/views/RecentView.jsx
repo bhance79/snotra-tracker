@@ -56,10 +56,10 @@ function WorkoutCard({ workout, onDelete }) {
   }
 
   return (
-    <div className="bg-brand-black border border-white/10 rounded-2xl px-4 py-4 mb-4">
+    <div className="bg-brand-card border border-white/10 rounded-2xl px-4 py-4 mb-4">
       {/* Header */}
       <div className="flex items-start justify-between mb-1">
-        <h2 className="text-lg font-bold text-white">{workout.routine_label} Workout</h2>
+        <h2 className="text-lg font-bold text-white font-baskerville">{workout.routine_label} Workout</h2>
         <span className="text-zinc-500 text-[11px] mt-1 shrink-0 ml-3">{formatDate(workout.date)}</span>
       </div>
 
@@ -185,7 +185,7 @@ export default function RecentView({ refreshKey }) {
   return (
     <div className="flex flex-col pb-4">
       <div className="sticky top-0 bg-brand-black px-4 safe-top">
-        <h1 className="text-2xl font-bold text-white py-4 text-center">Recents</h1>
+        <h1 className="text-2xl font-bold text-white py-4 text-center font-baskerville">Recents</h1>
       </div>
 
       <div className="px-4">

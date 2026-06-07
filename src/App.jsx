@@ -15,8 +15,10 @@ export default function App() {
   const [activeView, setActiveView] = useState('home')
   const [sessionRoutine, setSessionRoutine] = useState(null)
   const [sessionOpen, setSessionOpen] = useState(false)
+  const [sessionPaused, setSessionPaused] = useState(false)
+  const [sessionMiniInfo, setSessionMiniInfo] = useState(null)
   const [recentsKey, setRecentsKey] = useState(0)
-  const timer = useTimer(!!sessionRoutine)
+  const timer = useTimer(!!sessionRoutine, sessionPaused)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -67,6 +69,7 @@ export default function App() {
   function handleSessionStart(routine) {
     setSessionRoutine(routine)
     setSessionOpen(true)
+    setTimeout(() => setActiveView('home'), 450)
   }
 
   function handleSessionClose() {
@@ -78,6 +81,8 @@ export default function App() {
     clearActiveSession().catch(() => {})
     setSessionRoutine(null)
     setSessionOpen(false)
+    setSessionPaused(false)
+    setSessionMiniInfo(null)
     if (goToRecents) {
       setRecentsKey((k) => k + 1)
       setActiveView('recent')
@@ -96,20 +101,42 @@ export default function App() {
     return <LoginView />
   }
 
-  function renderView() {
-    if (activeView === 'home') return <HomeView refreshKey={recentsKey} />
-    if (activeView === 'recent') return <RecentView refreshKey={recentsKey} />
-    if (activeView === 'record') return <RecordView onSessionStart={handleSessionStart} />
-    if (activeView === 'search') return <SearchView />
-    if (activeView === 'profile') return <ProfileView />
-    return null
-  }
+  const showMiniBar = !!sessionRoutine && !sessionOpen && !!sessionMiniInfo
 
   return (
-    <div className="relative flex flex-col h-screen bg-brand-black text-white overflow-hidden">
-      <main className="flex-1 overflow-y-auto z-0 pb-24">
-        {renderView()}
+    <div className="relative flex flex-col h-screen bg-brand-black text-white">
+      <main className={`flex-1 overflow-y-auto z-0 ${showMiniBar ? 'pb-40' : 'pb-24'}`}>
+        {/* HomeView stays mounted so switching to it is instant (no flash) */}
+        <div className={activeView === 'home' ? 'h-full' : 'hidden'}>
+          <HomeView refreshKey={recentsKey} />
+        </div>
+        {activeView === 'recent'  && <RecentView refreshKey={recentsKey} />}
+        {activeView === 'record'  && <RecordView onSessionStart={handleSessionStart} />}
+        {activeView === 'search'  && <SearchView />}
+        {activeView === 'profile' && <ProfileView />}
       </main>
+
+      {showMiniBar && (
+        <div
+          className="fixed left-4 right-4 z-40 flex items-center justify-between px-4 py-3 rounded-2xl bg-white/8 backdrop-blur-xl border border-white/10"
+          style={{ bottom: 'calc(max(0.75rem, env(safe-area-inset-bottom)) + 72px)' }}
+          onClick={() => setSessionOpen(true)}
+        >
+          <div className="min-w-0">
+            <p className="text-white font-bold text-base leading-tight truncate">{sessionMiniInfo.name}</p>
+            <p className="text-zinc-400 text-sm mt-0.5">{sessionMiniInfo.setLabel}</p>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); setSessionOpen(true) }}
+            className="ml-4 shrink-0 text-white/60 active:text-white transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       <BottomNav
         active={activeView}
         onChange={handleNavChange}
@@ -121,6 +148,10 @@ export default function App() {
         onClose={handleSessionClose}
         onFinish={(goToRecents) => handleSessionEnd(goToRecents)}
         timer={timer}
+        paused={sessionPaused}
+        onPause={() => setSessionPaused(true)}
+        onResume={() => setSessionPaused(false)}
+        onMiniInfoChange={setSessionMiniInfo}
       />
     </div>
   )
