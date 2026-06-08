@@ -463,6 +463,74 @@ export async function getLastRoutineId() {
   return label ? (LABEL_TO_SLUG[label] ?? null) : null
 }
 
+// ─── Custom routines (localStorage) ───────────────────────────────────────
+// Routines saved by the user from a past workout ("Save as Routine").
+// Stored locally; no Supabase table required.
+
+const CUSTOM_ROUTINES_KEY = 'snotra_custom_routines'
+
+export function getCustomRoutines() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_ROUTINES_KEY)) || [] }
+  catch { return [] }
+}
+
+export function saveCustomRoutine(routine) {
+  const existing = getCustomRoutines()
+  localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify([...existing, routine]))
+}
+
+export function deleteCustomRoutine(id) {
+  const existing = getCustomRoutines()
+  localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(existing.filter((r) => r.id !== id)))
+}
+
+const HIDDEN_ROUTINES_KEY = 'snotra_hidden_routines'
+
+export function getHiddenRoutineIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_ROUTINES_KEY)) || []) }
+  catch { return new Set() }
+}
+
+export function hideRoutineId(id) {
+  const hidden = getHiddenRoutineIds()
+  hidden.add(id)
+  localStorage.setItem(HIDDEN_ROUTINES_KEY, JSON.stringify([...hidden]))
+}
+
+// ─── Custom exercises (localStorage) ──────────────────────────────────────
+
+const CUSTOM_EXERCISES_KEY = 'snotra_custom_exercises'
+const HIDDEN_EXERCISES_KEY = 'snotra_hidden_exercises'
+
+export function getCustomExercises() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_EXERCISES_KEY)) || [] }
+  catch { return [] }
+}
+
+export function saveCustomExercise(exercise) {
+  const existing = getCustomExercises()
+  const updated = existing.some((e) => e.name === exercise.name)
+    ? existing.map((e) => e.name === exercise.name ? exercise : e)
+    : [...existing, exercise]
+  localStorage.setItem(CUSTOM_EXERCISES_KEY, JSON.stringify(updated))
+}
+
+export function deleteCustomExercise(name) {
+  const existing = getCustomExercises()
+  localStorage.setItem(CUSTOM_EXERCISES_KEY, JSON.stringify(existing.filter((e) => e.name !== name)))
+}
+
+export function getHiddenExerciseNames() {
+  try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_EXERCISES_KEY)) || []) }
+  catch { return new Set() }
+}
+
+export function hideExerciseName(name) {
+  const hidden = getHiddenExerciseNames()
+  hidden.add(name)
+  localStorage.setItem(HIDDEN_EXERCISES_KEY, JSON.stringify([...hidden]))
+}
+
 // ─── migrateLocalData ──────────────────────────────────────────────────────
 // Called once on first login. Pushes any pre-auth localStorage workouts into
 // the new normalized schema. Each workout is migrated independently so a

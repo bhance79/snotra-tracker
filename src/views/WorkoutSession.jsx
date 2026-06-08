@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useReducer } from 'react'
 import { MUSCLE_COLORS } from '../data/routines'
 import { EXERCISE_LIBRARY } from '../data/exercises'
 import SaveActivitySheet from './SaveActivitySheet'
-import { completeWorkout, getExerciseHistory, saveActiveSession } from '../data/storage'
+import { completeWorkout, getExerciseHistory, saveActiveSession, saveCustomExercise } from '../data/storage'
+import ExerciseFormSheet from '../components/ExerciseFormSheet'
 
 // ─── Session-level timer (lives in App) ───────────────────────────────────────
 export const TIMER_KEY = 'snotra_timer_start'
@@ -222,14 +223,24 @@ function SwitchExercisePicker({ exercise, currentExercises, onSwitch, onClose })
 
 // ─── Add exercise picker ──────────────────────────────────────────────────────
 function AddExercisePicker({ currentExercises, onAdd, onClose }) {
+  const [visible, setVisible] = useState(false)
   const [query, setQuery] = useState('')
+  const [showCustomForm, setShowCustomForm] = useState(false)
   const inputRef = useRef(null)
   const currentNames = new Set(currentExercises.map((e) => e.name))
 
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+
+  function dismiss() {
+    setVisible(false)
+    setTimeout(onClose, 280)
+  }
+
   useEffect(() => {
+    if (showCustomForm) return
     const t = setTimeout(() => inputRef.current?.focus(), 100)
     return () => clearTimeout(t)
-  }, [])
+  }, [showCustomForm])
 
   const q = query.trim().toLowerCase()
   const results = q
@@ -244,59 +255,107 @@ function AddExercisePicker({ currentExercises, onAdd, onClose }) {
 
   function handleAdd(libEx) {
     onAdd({ name: libEx.name, muscles: libEx.muscles, setsReps: '3 × 10' })
-    onClose()
+    dismiss()
+  }
+
+  function handleCustomSave(exercise) {
+    saveCustomExercise(exercise)
+    onAdd({
+      name: exercise.name,
+      muscles: exercise.muscles,
+      setsReps: exercise.defaultSetsReps ?? '3 × 10',
+    })
+    // dismiss is called by ExerciseFormSheet after its own animation
+  }
+
+  if (showCustomForm) {
+    return (
+      <ExerciseFormSheet
+        exercise={null}
+        onSave={handleCustomSave}
+        onClose={() => setShowCustomForm(false)}
+        actionLabel="Add to Queue"
+      />
+    )
   }
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]">
-        <div className="px-4 pt-4 pb-3 shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-white font-semibold text-base">Add Exercise</span>
-            <button onClick={onClose} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
-          </div>
-          <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-zinc-500 shrink-0">
-              <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
-            </svg>
-            <input ref={inputRef} type="text" placeholder="Search exercises…" value={query} onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm" style={{ fontSize: '16px' }} />
-            {query && (
-              <button onClick={() => setQuery('')} className="text-zinc-500 active:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    <div className="absolute inset-0 z-40 flex flex-col justify-end">
+      <div
+        className="absolute inset-0 bg-black/50"
+        style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.28s ease-out' }}
+        onClick={dismiss}
+      />
+      <div
+        className="relative flex flex-col bg-zinc-950 rounded-t-2xl border-t border-zinc-800 h-[75%]"
+        style={{
+          transform: visible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.28s ease-out',
+        }}
+      >
+        {/* ── Library search ── */}
+            <div className="px-4 pt-4 pb-3 shrink-0">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white font-semibold text-base">Add Exercise</span>
+                <button onClick={dismiss} className="text-zinc-500 active:text-white transition-colors text-xl leading-none">×</button>
+              </div>
+              <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 border border-zinc-700">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-zinc-500 shrink-0">
+                  <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="22" y2="22" />
                 </svg>
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="overflow-y-auto pb-8 px-4">
-          {results.length === 0 ? (
-            <p className="text-zinc-500 text-sm text-center py-8">No exercises found</p>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {results.map((ex) => {
-                const alreadyAdded = currentNames.has(ex.name)
-                return (
-                  <button key={ex.name} onClick={() => !alreadyAdded && handleAdd(ex)} disabled={alreadyAdded}
-                    className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-colors ${alreadyAdded ? 'bg-brand-black opacity-40 cursor-default' : 'bg-zinc-800 active:bg-zinc-700'}`}>
-                    <div className="min-w-0 mr-3">
-                      <div className="text-white text-sm font-semibold truncate">{ex.name}</div>
-                      <div className="text-zinc-500 text-xs mt-0.5">{ex.pattern} · {ex.equipment}</div>
-                    </div>
-                    <div className="flex flex-wrap gap-1 justify-end shrink-0 max-w-[130px]">
-                      {ex.muscles.slice(0, 2).map((m) => (
-                        <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>{m}</span>
-                      ))}
-                      {alreadyAdded && <span className="text-xs text-zinc-500">added</span>}
-                    </div>
+                <input ref={inputRef} type="text" placeholder="Search exercises…" value={query} onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 bg-transparent text-white outline-none placeholder-zinc-600 text-sm" style={{ fontSize: '16px' }} />
+                {query && (
+                  <button onClick={() => setQuery('')} className="text-zinc-500 active:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
-                )
-              })}
+                )}
+              </div>
             </div>
-          )}
-        </div>
+            <div className="overflow-y-auto pb-8 px-4">
+              <div className="flex flex-col gap-1.5">
+                {/* Custom / blank slot */}
+                <button
+                  onClick={() => setShowCustomForm(true)}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-left border border-dashed border-zinc-600 active:bg-zinc-800/50 transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-full border border-dashed border-zinc-600 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-zinc-500">
+                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-zinc-400 text-sm font-semibold">Custom Exercise</div>
+                    <div className="text-zinc-600 text-xs mt-0.5">Name it yourself</div>
+                  </div>
+                </button>
+
+                {results.length === 0 ? (
+                  <p className="text-zinc-500 text-sm text-center py-8">No exercises found</p>
+                ) : (
+                  results.map((ex) => {
+                    const alreadyAdded = currentNames.has(ex.name)
+                    return (
+                      <button key={ex.name} onClick={() => !alreadyAdded && handleAdd(ex)} disabled={alreadyAdded}
+                        className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-colors ${alreadyAdded ? 'bg-brand-black opacity-40 cursor-default' : 'bg-zinc-800 active:bg-zinc-700'}`}>
+                        <div className="min-w-0 mr-3">
+                          <div className="text-white text-sm font-semibold truncate">{ex.name}</div>
+                          <div className="text-zinc-500 text-xs mt-0.5">{ex.pattern} · {ex.equipment}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-1 justify-end shrink-0 max-w-[130px]">
+                          {ex.muscles.slice(0, 2).map((m) => (
+                            <span key={m} className={`text-xs px-2 py-0.5 rounded-full font-medium ${MUSCLE_COLORS[m] ?? 'bg-zinc-600 text-white'}`}>{m}</span>
+                          ))}
+                          {alreadyAdded && <span className="text-xs text-zinc-500">added</span>}
+                        </div>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
       </div>
     </div>
   )
@@ -405,13 +464,26 @@ function fmtLapTimer(mmss) {
 }
 
 // ─── Workout queue tray ───────────────────────────────────────────────────────
-function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExercise, onClose, onOpenAddPicker, onReorder }) {
+function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExercise, onClose, onOpenAddPicker, onReorder, onRemove }) {
   const [visible, setVisible] = useState(false)
   const [draggingIdx, setDraggingIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [longPressIdx, setLongPressIdx] = useState(null)
+  const [swipedOpenIdx, setSwipedOpenIdx] = useState(null)
+  const [liveSwipe, setLiveSwipe] = useState(null)
   const draggingIdxRef = useRef(null)
   const dragOverIdxRef = useRef(null)
+  const longPressTimerRef = useRef(null)
+  const touchStartYRef = useRef(0)
+  const touchStartXRef = useRef(0)
+  const suppressClickRef = useRef(false)
+  const containerRef = useRef(null)
   const listRef = useRef(null)
+  const swipedOpenIdxRef = useRef(null)
+  const isSwipeModeRef = useRef(false)
+  const activeSwipeIdxRef = useRef(null)
+  const liveSwipeIdxRef = useRef(null)
+  const liveSwipeDxRef = useRef(0)
 
   useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
 
@@ -421,36 +493,164 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
   }
 
   function handleAdd() {
-    setVisible(false)
-    setTimeout(() => { onClose(); onOpenAddPicker() }, 280)
+    onOpenAddPicker()
   }
 
-  function onDragHandleStart(e, idx) {
-    e.stopPropagation()
-    draggingIdxRef.current = idx
-    dragOverIdxRef.current = idx
-    setDraggingIdx(idx)
-    setDragOverIdx(idx)
+  function cancelLongPress() {
+    clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = null
+    setLongPressIdx(null)
   }
 
+  function handleRemove(i) {
+    swipedOpenIdxRef.current = null
+    setSwipedOpenIdx(null)
+    setLiveSwipe(null)
+    liveSwipeIdxRef.current = null
+    liveSwipeDxRef.current = 0
+    onRemove(i)
+  }
+
+  // All touch logic on the container so stopPropagation fires before the
+  // session's sheetRef bubble-phase listeners, blocking the dismiss gesture.
   useEffect(() => {
-    function onMove(e) {
-      if (draggingIdxRef.current === null) return
-      e.preventDefault()
+    const el = containerRef.current
+    if (!el) return
+
+    function onStart(e) {
       e.stopPropagation()
-      const y = e.touches[0].clientY
-      const list = listRef.current
-      if (!list) return
-      const rows = list.querySelectorAll('[data-row]')
-      let target = rows.length - 1
-      for (let i = 0; i < rows.length; i++) {
-        const rect = rows[i].getBoundingClientRect()
-        if (y < rect.top + rect.height / 2) { target = i; break }
+      isSwipeModeRef.current = false
+      activeSwipeIdxRef.current = null
+      setLiveSwipe(null)
+      liveSwipeIdxRef.current = null
+      liveSwipeDxRef.current = 0
+
+      // Trash zone gets its own React onClick — don't interfere
+      if (e.target.closest('[data-trash]')) return
+
+      const row = e.target.closest('[data-row]')
+      if (!row) {
+        if (swipedOpenIdxRef.current !== null) {
+          swipedOpenIdxRef.current = null
+          setSwipedOpenIdx(null)
+        }
+        return
       }
-      dragOverIdxRef.current = target
-      setDragOverIdx(target)
+      const idx = parseInt(row.dataset.rowIdx ?? '-1', 10)
+      if (idx < 0) return
+
+      // Close open swipe on a different row without starting interaction
+      if (swipedOpenIdxRef.current !== null && swipedOpenIdxRef.current !== idx) {
+        swipedOpenIdxRef.current = null
+        setSwipedOpenIdx(null)
+        return
+      }
+
+      touchStartYRef.current = e.touches[0].clientY
+      touchStartXRef.current = e.touches[0].clientX
+      activeSwipeIdxRef.current = idx
+      setLongPressIdx(idx)
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTimerRef.current = null
+        suppressClickRef.current = true
+        // Close any swipe before drag mode
+        swipedOpenIdxRef.current = null
+        setSwipedOpenIdx(null)
+        setLiveSwipe(null)
+        liveSwipeIdxRef.current = null
+        liveSwipeDxRef.current = 0
+        draggingIdxRef.current = idx
+        dragOverIdxRef.current = idx
+        setLongPressIdx(null)
+        setDraggingIdx(idx)
+        setDragOverIdx(idx)
+      }, 380)
     }
-    function onEnd() {
+
+    function onMove(e) {
+      e.stopPropagation()
+
+      // Drag mode
+      if (draggingIdxRef.current !== null) {
+        e.preventDefault()
+        const y = e.touches[0].clientY
+        const list = listRef.current
+        if (!list) return
+        const rows = list.querySelectorAll('[data-row]')
+        let target = rows.length - 1
+        for (let i = 0; i < rows.length; i++) {
+          const rect = rows[i].getBoundingClientRect()
+          if (y < rect.top + rect.height / 2) { target = i; break }
+        }
+        dragOverIdxRef.current = target
+        setDragOverIdx(target)
+        return
+      }
+
+      // Swipe mode
+      if (isSwipeModeRef.current) {
+        e.preventDefault()
+        const rawDx = e.touches[0].clientX - touchStartXRef.current
+        const baseX = swipedOpenIdxRef.current === activeSwipeIdxRef.current ? -72 : 0
+        const totalDx = Math.max(-72, Math.min(0, baseX + rawDx))
+        liveSwipeDxRef.current = totalDx
+        liveSwipeIdxRef.current = activeSwipeIdxRef.current
+        setLiveSwipe({ idx: activeSwipeIdxRef.current, dx: totalDx })
+        return
+      }
+
+      // Decision phase
+      if (longPressTimerRef.current !== null) {
+        const dy = Math.abs(e.touches[0].clientY - touchStartYRef.current)
+        const rawDx = e.touches[0].clientX - touchStartXRef.current
+        const adx = Math.abs(rawDx)
+
+        if (adx > 8 && adx > dy) {
+          // Horizontal → swipe mode
+          clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+          setLongPressIdx(null)
+          isSwipeModeRef.current = true
+          const baseX = swipedOpenIdxRef.current === activeSwipeIdxRef.current ? -72 : 0
+          const totalDx = Math.max(-72, Math.min(0, baseX + rawDx))
+          liveSwipeDxRef.current = totalDx
+          liveSwipeIdxRef.current = activeSwipeIdxRef.current
+          setLiveSwipe({ idx: activeSwipeIdxRef.current, dx: totalDx })
+        } else if (dy > 8 && dy > adx) {
+          // Vertical → scroll
+          clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+          setLongPressIdx(null)
+        }
+      }
+    }
+
+    function onEnd(e) {
+      e.stopPropagation()
+      const touchedIdx = activeSwipeIdxRef.current
+      activeSwipeIdxRef.current = null
+
+      if (isSwipeModeRef.current) {
+        isSwipeModeRef.current = false
+        const dx = liveSwipeDxRef.current
+        liveSwipeIdxRef.current = null
+        liveSwipeDxRef.current = 0
+        setLiveSwipe(null)
+        suppressClickRef.current = true
+
+        if (touchedIdx !== null) {
+          if (dx < -36) {
+            swipedOpenIdxRef.current = touchedIdx
+            setSwipedOpenIdx(touchedIdx)
+          } else {
+            swipedOpenIdxRef.current = null
+            setSwipedOpenIdx(null)
+          }
+        }
+        return
+      }
+
+      cancelLongPress()
       const from = draggingIdxRef.current
       const to = dragOverIdxRef.current
       if (from !== null && to !== null && from !== to) onReorder(from, to)
@@ -459,16 +659,19 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
       setDraggingIdx(null)
       setDragOverIdx(null)
     }
-    document.addEventListener('touchmove', onMove, { passive: false })
-    document.addEventListener('touchend', onEnd)
+
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd, { passive: true })
     return () => {
-      document.removeEventListener('touchmove', onMove)
-      document.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
     }
   }, [onReorder])
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col justify-end">
+    <div ref={containerRef} className="absolute inset-0 z-30 flex flex-col justify-end">
       <div
         className="absolute inset-0 bg-black/60"
         style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.28s ease-out' }}
@@ -502,60 +705,77 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
             const isDropAbove = draggingIdx !== null && dragOverIdx === i && draggingIdx > i
             const isDropBelow = draggingIdx !== null && dragOverIdx === i && draggingIdx < i
 
+            const isLongPressing = longPressIdx === i
+            const rowTx = liveSwipe?.idx === i ? liveSwipe.dx : swipedOpenIdx === i ? -72 : 0
             return (
               <div
                 key={i}
                 data-row
-                className={`flex items-center transition-opacity ${isDragging ? 'opacity-30' : 'opacity-100'} ${isDropAbove ? 'border-t-2 border-brand-red' : ''} ${isDropBelow ? 'border-b-2 border-brand-red' : ''}`}
+                data-row-idx={i}
+                className={`relative overflow-hidden ${isDragging ? 'opacity-30' : 'opacity-100'} ${isDropAbove ? 'border-t-2 border-brand-red' : ''} ${isDropBelow ? 'border-b-2 border-brand-red' : ''}`}
+                style={isDragging ? undefined : { transition: 'opacity 0.15s' }}
               >
-                {/* Drag handle */}
-                <div
-                  className="shrink-0 pl-3 pr-1 py-4 touch-none text-zinc-700 active:text-zinc-400 cursor-grab"
-                  onTouchStart={(e) => onDragHandleStart(e, i)}
-                >
-                  <svg viewBox="0 0 10 16" fill="currentColor" className="w-3 h-4">
-                    <circle cx="2.5" cy="2" r="1.5" /><circle cx="7.5" cy="2" r="1.5" />
-                    <circle cx="2.5" cy="8" r="1.5" /><circle cx="7.5" cy="8" r="1.5" />
-                    <circle cx="2.5" cy="14" r="1.5" /><circle cx="7.5" cy="14" r="1.5" />
-                  </svg>
+                {/* Trash zone — sits behind content, revealed by left-slide */}
+                <div data-trash className="absolute right-0 top-0 h-full w-[72px] bg-brand-red flex items-center justify-center">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemove(i) }}
+                    className="w-full h-full flex items-center justify-center active:bg-red-700 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-white">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                  </button>
                 </div>
 
-                {/* Row content (tappable) */}
-                <button
-                  className={`flex-1 flex items-center gap-3 px-3 py-3 text-left active:bg-white/5 transition-colors ${isCurrent ? 'bg-white/5' : ''}`}
-                  onClick={() => { onSelectExercise(i); dismiss() }}
+                {/* Slideable row content */}
+                <div
+                  className="flex items-center bg-zinc-950"
+                  style={{
+                    transform: `translateX(${rowTx}px)`,
+                    transition: (draggingIdx !== null || (liveSwipe !== null && liveSwipe.idx === i)) ? 'none' : 'transform 0.2s ease-out',
+                  }}
                 >
-                  {/* Status indicator */}
-                  <div className="shrink-0 w-6 h-6 flex items-center justify-center">
-                    {isCurrent ? (
-                      <div className="w-2 h-2 rounded-full bg-brand-red" />
-                    ) : ratedSets === totalSets && totalSets > 0 ? (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-400">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <span className="text-sm text-zinc-600 font-medium">{i + 1}</span>
-                    )}
-                  </div>
+                  <button
+                    className={`flex-1 flex items-center gap-3 px-3 py-3 text-left transition-colors ${isCurrent ? 'bg-white/5' : ''} ${isLongPressing ? 'bg-white/8' : 'active:bg-white/5'}`}
+                    onClick={() => {
+                      if (suppressClickRef.current) { suppressClickRef.current = false; return }
+                      onSelectExercise(i)
+                      dismiss()
+                    }}
+                  >
+                    {/* Status indicator */}
+                    <div className="shrink-0 w-6 h-6 flex items-center justify-center">
+                      {isCurrent ? (
+                        <div className="w-2 h-2 rounded-full bg-brand-red" />
+                      ) : ratedSets === totalSets && totalSets > 0 ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-400">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <span className="text-sm text-zinc-600 font-medium">{i + 1}</span>
+                      )}
+                    </div>
 
-                  {/* Name + muscles */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold truncate leading-tight ${isCurrent ? 'text-white' : ratedSets === totalSets && totalSets > 0 ? 'text-zinc-400' : 'text-white/80'}`}>
-                      {ex.name}
-                    </p>
-                    {muscles.length > 0 && (
-                      <p className="text-xs text-zinc-600 mt-0.5 truncate">{muscles.join(' · ')}</p>
-                    )}
-                  </div>
+                    {/* Name + muscles */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold truncate leading-tight ${isCurrent ? 'text-white' : ratedSets === totalSets && totalSets > 0 ? 'text-zinc-400' : 'text-white/80'}`}>
+                        {ex.name}
+                      </p>
+                      {muscles.length > 0 && (
+                        <p className="text-xs text-zinc-600 mt-0.5 truncate">{muscles.join(' · ')}</p>
+                      )}
+                    </div>
 
-                  {/* Sets progress */}
-                  <div className="shrink-0 text-right">
-                    <span className={`text-xs font-medium tabular-nums ${isCurrent ? 'text-brand-red' : 'text-zinc-600'}`}>
-                      {ratedSets}/{totalSets}
-                    </span>
-                    <p className="text-zinc-700 text-xs">sets</p>
-                  </div>
-                </button>
+                    {/* Sets progress */}
+                    <div className="shrink-0 text-right">
+                      <span className={`text-xs font-medium tabular-nums ${isCurrent ? 'text-brand-red' : 'text-zinc-600'}`}>
+                        {ratedSets}/{totalSets}
+                      </span>
+                      <p className="text-zinc-700 text-xs">sets</p>
+                    </div>
+                  </button>
+                </div>
               </div>
             )
           })}
@@ -1082,6 +1302,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
             onClose={() => setShowQueue(false)}
             onOpenAddPicker={() => setShowPicker(true)}
             onReorder={reorderExercises}
+            onRemove={removeExercise}
           />
         )}
 

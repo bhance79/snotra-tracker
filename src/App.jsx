@@ -67,6 +67,7 @@ export default function App() {
   }
 
   function handleSessionStart(routine) {
+    sessionStorage.removeItem('snotra_preview_routine')
     setSessionRoutine(routine)
     setSessionOpen(true)
     setTimeout(() => setActiveView('home'), 450)

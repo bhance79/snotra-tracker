@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { MUSCLE_COLORS } from '../data/routines'
 import { EXERCISE_LIBRARY, ALL_MUSCLES } from '../data/exercises'
+import {
+  getCustomExercises,
+  saveCustomExercise,
+  deleteCustomExercise,
+  getHiddenExerciseNames,
+  hideExerciseName,
+} from '../data/storage'
+import ExerciseFormSheet from '../components/ExerciseFormSheet'
 
 const TIER_STYLES = {
   1: 'bg-amber-400 text-black',
@@ -43,6 +51,8 @@ const EQUIPMENT_COLORS = {
   'ball':             'bg-teal-900 text-teal-300',
 }
 
+const CATEGORY_ORDER = ['Chest', 'Shoulders', 'Arms', 'Back', 'Legs', 'Calves', 'Core']
+
 function highlight(text, query) {
   if (!query) return text
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
@@ -58,40 +68,41 @@ function highlight(text, query) {
 
 function ExerciseCard({ exercise, query }) {
   return (
-    <div className="bg-brand-black rounded-2xl px-4 py-3 mb-2">
-      {/* Name */}
+    <div className="bg-brand-card rounded-2xl px-4 py-3">
       <div className="text-white font-semibold text-base mb-2">
         {highlight(exercise.name, query)}
       </div>
-
-      {/* Muscle tags */}
       <div className="flex flex-wrap gap-1.5 mb-2.5">
         {exercise.muscles.map((m) => (
-          <span
-            key={m}
-            className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-              MUSCLE_COLORS[m] || 'bg-zinc-700 text-white'
-            }`}
-          >
+          <span key={m} className={`text-xs px-2.5 py-1 rounded-full font-medium ${MUSCLE_COLORS[m] || 'bg-zinc-700 text-white'}`}>
             {m}
           </span>
         ))}
       </div>
-
-      {/* Meta row — tier · lift type · pattern · equipment */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${TIER_STYLES[exercise.tier]}`}>
-          T{exercise.tier}
-        </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LIFT_TYPE_COLORS[exercise.liftType] ?? 'bg-zinc-800 text-zinc-400'}`}>
-          {exercise.liftType}
-        </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PATTERN_COLORS[exercise.pattern] ?? 'bg-zinc-800 text-zinc-400'}`}>
-          {exercise.pattern}
-        </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${EQUIPMENT_COLORS[exercise.equipment.split('/')[0].trim()] ?? 'bg-zinc-800 text-zinc-400'}`}>
-          {exercise.equipment}
-        </span>
+        {exercise.tier != null && (
+          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${TIER_STYLES[exercise.tier] ?? 'bg-zinc-800 text-zinc-400'}`}>
+            T{exercise.tier}
+          </span>
+        )}
+        {exercise.liftType && (
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LIFT_TYPE_COLORS[exercise.liftType] ?? 'bg-zinc-800 text-zinc-400'}`}>
+            {exercise.liftType}
+          </span>
+        )}
+        {exercise.pattern && (
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PATTERN_COLORS[exercise.pattern] ?? 'bg-zinc-800 text-zinc-400'}`}>
+            {exercise.pattern}
+          </span>
+        )}
+        {exercise.equipment && (
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${EQUIPMENT_COLORS[exercise.equipment.split('/')[0].trim()] ?? 'bg-zinc-800 text-zinc-400'}`}>
+            {exercise.equipment}
+          </span>
+        )}
+        {exercise.isCustom && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-brand-red/20 text-brand-red">custom</span>
+        )}
       </div>
     </div>
   )
@@ -106,9 +117,6 @@ function groupByCategory(exercises) {
   return groups
 }
 
-const CATEGORY_ORDER = ['Chest', 'Shoulders', 'Arms', 'Back', 'Legs', 'Calves', 'Core']
-
-// Searching a parent term expands to include these categories
 const CATEGORY_ALIASES = {
   'legs':  ['legs', 'calves'],
   'lower': ['legs', 'calves'],
@@ -118,17 +126,28 @@ const CATEGORY_ALIASES = {
 
 export default function SearchView() {
   const [query, setQuery] = useState('')
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [customExercises, setCustomExercises] = useState(() => getCustomExercises())
+  const [hiddenNames, setHiddenNames] = useState(() => getHiddenExerciseNames())
+  const [confirmDeleteName, setConfirmDeleteName] = useState(null)
+  const [formExercise, setFormExercise] = useState(undefined) // undefined=closed, null=new, object=edit
   const containerRef = useRef(null)
 
   const q = query.trim()
 
-  // Scroll to top whenever query changes
   useEffect(() => {
     containerRef.current?.parentElement?.scrollTo({ top: 0, behavior: 'instant' })
   }, [q])
 
+  // Merged library: custom exercises first, then static (minus hidden)
+  const allExercises = [
+    ...customExercises,
+    ...EXERCISE_LIBRARY.filter((ex) => !hiddenNames.has(ex.name)),
+  ]
+
   const filtered = q
-    ? EXERCISE_LIBRARY.filter((ex) => {
+    ? allExercises.filter((ex) => {
         const lq = q.toLowerCase()
         const expandedCategories = CATEGORY_ALIASES[lq] ?? null
         return (
@@ -137,24 +156,143 @@ export default function SearchView() {
           (expandedCategories
             ? expandedCategories.includes(ex.category.toLowerCase())
             : ex.category.toLowerCase().includes(lq)) ||
-          ex.pattern.toLowerCase().includes(lq) ||
-          ex.equipment.toLowerCase().includes(lq)
+          ex.pattern?.toLowerCase().includes(lq) ||
+          ex.equipment?.toLowerCase().includes(lq)
         )
       })
-    : EXERCISE_LIBRARY
+    : allExercises
 
-  // Chips narrow to muscles that match query when typing
   const visibleChips = q
     ? ALL_MUSCLES.filter((m) => m.toLowerCase().includes(q.toLowerCase()))
     : ALL_MUSCLES
 
   const grouped = groupByCategory(filtered)
 
+  function exitEditMode() {
+    setEditMode(false)
+    setConfirmDeleteName(null)
+  }
+
+  function handleDelete(ex) {
+    if (ex.isCustom) {
+      deleteCustomExercise(ex.name)
+      setCustomExercises((prev) => prev.filter((e) => e.name !== ex.name))
+    } else {
+      hideExerciseName(ex.name)
+      setHiddenNames((prev) => new Set([...prev, ex.name]))
+    }
+    setConfirmDeleteName(null)
+  }
+
+  function handleSaveExercise(exercise) {
+    const originalName = formExercise?.name
+    const wasStatic = formExercise && !formExercise.isCustom
+
+    if (wasStatic && originalName) {
+      // Converting a static exercise — hide the original so it doesn't duplicate
+      hideExerciseName(originalName)
+      setHiddenNames((prev) => new Set([...prev, originalName]))
+    } else if (originalName && originalName !== exercise.name) {
+      // Renaming a custom exercise — remove the old entry
+      deleteCustomExercise(originalName)
+    }
+
+    saveCustomExercise(exercise)
+    setCustomExercises(getCustomExercises())
+    setFormExercise(undefined)
+  }
+
+  function renderRow(ex) {
+    const isConfirming = confirmDeleteName === ex.name
+    return (
+      <div key={ex.name} className="flex items-center gap-2 mb-2">
+        {/* Centered minus button */}
+        {editMode && (
+          <button
+            onClick={() => setConfirmDeleteName(isConfirming ? null : ex.name)}
+            className="shrink-0 text-brand-red active:opacity-60 transition-opacity"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" className="w-7 h-7">
+              <circle cx="12" cy="12" r="9" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </button>
+        )}
+
+        {isConfirming ? (
+          <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-brand-card border border-white/10">
+            <span className="text-white text-sm font-medium truncate mr-3">Delete "{ex.name}"?</span>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => setConfirmDeleteName(null)} className="px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm active:bg-zinc-700 transition-colors">Cancel</button>
+              <button onClick={() => handleDelete(ex)} className="px-3 py-1.5 rounded-xl bg-brand-red text-white text-sm active:bg-brand-crimson transition-colors">Delete</button>
+            </div>
+          </div>
+        ) : editMode ? (
+          /* Any card in edit mode is tappable to open the edit form */
+          <button
+            className="flex-1 text-left active:opacity-70 transition-opacity rounded-2xl"
+            onClick={() => setFormExercise(ex)}
+          >
+            <ExerciseCard exercise={ex} query={q} />
+          </button>
+        ) : (
+          <div className="flex-1">
+            <ExerciseCard exercise={ex} query={q} />
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div ref={containerRef} className="flex flex-col pb-4">
+    <div ref={containerRef} className="relative flex flex-col pb-4">
       {/* Sticky header */}
       <div className="sticky top-0 bg-brand-black px-4 safe-top z-10">
-        <h1 className="text-2xl font-bold text-white py-4 text-center font-baskerville">Library</h1>
+        <div className="flex items-center justify-between py-4">
+          <div className="w-10" />
+          <h1 className="text-2xl font-bold text-white font-baskerville">Library</h1>
+
+          {/* Three-dot menu or Done button */}
+          {editMode ? (
+            <button
+              onClick={exitEditMode}
+              className="w-10 text-right text-sm font-semibold text-brand-red active:text-red-400 transition-colors"
+            >
+              Done
+            </button>
+          ) : (
+            <div className="relative w-10 flex justify-end">
+              {showHeaderMenu && (
+                <div className="fixed inset-0 z-10" onClick={() => setShowHeaderMenu(false)} />
+              )}
+              <button
+                onClick={() => setShowHeaderMenu((v) => !v)}
+                className="p-1 -mr-1 text-white/40 active:text-white transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                </svg>
+              </button>
+              {showHeaderMenu && (
+                <div className="absolute right-0 top-8 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-20">
+                  <button
+                    onClick={() => { setShowHeaderMenu(false); setEditMode(true) }}
+                    className="w-full px-4 py-3.5 text-left text-white text-sm font-medium active:bg-zinc-800 transition-colors"
+                  >
+                    Edit and Remove
+                  </button>
+                  <div className="h-px bg-white/5" />
+                  <button
+                    onClick={() => { setShowHeaderMenu(false); setFormExercise(null) }}
+                    className="w-full px-4 py-3.5 text-left text-white text-sm font-medium active:bg-zinc-800 transition-colors"
+                  >
+                    Add Exercise
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Search bar */}
         <div className="flex items-center gap-2 bg-brand-black rounded-2xl px-4 py-3 mb-3 border border-zinc-800">
@@ -191,7 +329,7 @@ export default function SearchView() {
                 onClick={() => setQuery(query === m ? '' : m)}
                 className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap shrink-0 transition-opacity active:opacity-70 ${
                   query === m
-                    ? 'ring-2 ring-white/50 ' + (MUSCLE_COLORS[m] || 'bg-zinc-700 text-white')
+                    ? (MUSCLE_COLORS[m] || 'bg-zinc-700 text-white')
                     : MUSCLE_COLORS[m] || 'bg-zinc-700 text-white'
                 }`}
               >
@@ -213,9 +351,7 @@ export default function SearchView() {
             <p className="text-zinc-500 text-xs mb-3">
               {filtered.length} exercise{filtered.length !== 1 ? 's' : ''}
             </p>
-            {filtered.map((ex) => (
-              <ExerciseCard key={ex.name} exercise={ex} query={q} />
-            ))}
+            {filtered.map((ex) => renderRow(ex))}
           </>
         ) : (
           CATEGORY_ORDER.filter((cat) => grouped[cat]).map((cat) => (
@@ -223,13 +359,22 @@ export default function SearchView() {
               <h2 className="text-zinc-400 text-xs font-semibold uppercase tracking-widest mb-2 px-1">
                 {cat}
               </h2>
-              {grouped[cat].map((ex) => (
-                <ExerciseCard key={ex.name} exercise={ex} query="" />
-              ))}
+              {grouped[cat].map((ex) => renderRow(ex))}
             </div>
           ))
         )}
+
       </div>
+
+      {/* Exercise form sheet */}
+      {formExercise !== undefined && (
+        <ExerciseFormSheet
+          exercise={formExercise}
+          onSave={handleSaveExercise}
+          onClose={() => setFormExercise(undefined)}
+          actionLabel={formExercise ? 'Save Changes' : 'Add to Library'}
+        />
+      )}
     </div>
   )
 }

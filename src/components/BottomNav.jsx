@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 export default function BottomNav({ active, onChange, sessionActive = false }) {
   return (
     <nav
-      className="fixed left-4 right-4 h-16 bg-white/8 backdrop-blur-xl rounded-full flex items-center justify-around border border-white/10 z-50"
+      className="fixed left-4 right-4 h-16 bg-white/8 backdrop-blur-xl rounded-full flex items-center justify-around border border-white/10 z-30"
       style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       {NAV_ITEMS.map(({ id, outline, filled }) => {
