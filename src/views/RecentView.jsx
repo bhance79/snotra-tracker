@@ -172,7 +172,7 @@ function WorkoutCard({ workout, onDelete, onSaved }) {
           {validExercises.map((ex) => (
             <div key={ex.name} className="flex items-center justify-between py-2.5">
               <div className="min-w-0 mr-3">
-                <p className="text-white font-semibold text-lg leading-tight">{ex.name}</p>
+                <p className="text-white font-semibold text-base leading-tight">{ex.name}</p>
                 <p className="text-zinc-400 text-base mt-0.5">{buildExerciseSummary(ex.sets)}</p>
               </div>
               <div className={`w-14 h-2.5 rounded-full shrink-0 ${lastRatingColor(ex.sets)}`} />

@@ -1,38 +1,48 @@
-const CLIENT_ID = '227043'
-const CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET
-const REDIRECT_URI = 'https://snotra-fitness.netlify.app'
+const CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID ?? '227043'
 
 const KEYS = {
   accessToken:  'strava_access_token',
   refreshToken: 'strava_refresh_token',
   expiresAt:    'strava_token_expires_at',
   athlete:      'strava_athlete',
+  oauthState:   'strava_oauth_state',
+}
+
+function generateState() {
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 export function connectStrava() {
+  const state = generateState()
+  sessionStorage.setItem(KEYS.oauthState, state)
+
   const url =
     `https://www.strava.com/oauth/authorize` +
     `?client_id=${CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(window.location.origin)}` +
     `&response_type=code` +
     `&scope=read,activity:read_all` +
-    `&approval_prompt=auto`
+    `&approval_prompt=auto` +
+    `&state=${state}`
   window.location.href = url
 }
 
-export async function handleStravaCallback(code) {
-  const res = await fetch('https://www.strava.com/oauth/token', {
+export async function handleStravaCallback(code, returnedState) {
+  const savedState = sessionStorage.getItem(KEYS.oauthState)
+  sessionStorage.removeItem(KEYS.oauthState)
+
+  if (!savedState || savedState !== returnedState) return false
+
+  const res = await fetch('/api/strava-token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      code,
-      grant_type: 'authorization_code',
-    }),
+    body: JSON.stringify({ grant_type: 'authorization_code', code }),
   })
   const data = await res.json()
   if (!data.access_token) return false
+
   localStorage.setItem(KEYS.accessToken,  data.access_token)
   localStorage.setItem(KEYS.refreshToken, data.refresh_token)
   localStorage.setItem(KEYS.expiresAt,    String(data.expires_at))
@@ -40,19 +50,18 @@ export async function handleStravaCallback(code) {
   return true
 }
 
-async function refreshToken() {
-  const res = await fetch('https://www.strava.com/oauth/token', {
+async function refreshAccessToken() {
+  const res = await fetch('/api/strava-token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      grant_type:    'refresh_token',
       refresh_token: localStorage.getItem(KEYS.refreshToken),
-      grant_type: 'refresh_token',
     }),
   })
   const data = await res.json()
   if (!data.access_token) return null
+
   localStorage.setItem(KEYS.accessToken,  data.access_token)
   localStorage.setItem(KEYS.refreshToken, data.refresh_token)
   localStorage.setItem(KEYS.expiresAt,    String(data.expires_at))
@@ -64,7 +73,7 @@ async function getAccessToken() {
   if (Math.floor(Date.now() / 1000) < expiresAt - 60) {
     return localStorage.getItem(KEYS.accessToken)
   }
-  return refreshToken()
+  return refreshAccessToken()
 }
 
 export function isStravaConnected() {
