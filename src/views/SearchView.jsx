@@ -60,7 +60,7 @@ function highlight(text, query) {
   return (
     <>
       {text.slice(0, idx)}
-      <span className="text-brand-red">{text.slice(idx, idx + query.length)}</span>
+      <span className="text-white">{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </>
   )
@@ -68,7 +68,7 @@ function highlight(text, query) {
 
 function ExerciseCard({ exercise, query }) {
   return (
-    <div className="bg-brand-card rounded-2xl px-4 py-3">
+    <div className="bg-card border border-white/10 rounded-2xl px-4 py-3">
       <div className="text-white font-semibold text-base mb-2">
         {highlight(exercise.name, query)}
       </div>
@@ -101,7 +101,7 @@ function ExerciseCard({ exercise, query }) {
           </span>
         )}
         {exercise.isCustom && (
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-brand-red/20 text-brand-red">custom</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-white/20 text-white">custom</span>
         )}
       </div>
     </div>
@@ -220,11 +220,11 @@ export default function SearchView() {
         )}
 
         {isConfirming ? (
-          <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-brand-card border border-white/10">
+          <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-card border border-white/10">
             <span className="text-white text-sm font-medium truncate mr-3">Delete "{ex.name}"?</span>
             <div className="flex gap-2 shrink-0">
               <button onClick={() => setConfirmDeleteName(null)} className="px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm active:bg-zinc-700 transition-colors">Cancel</button>
-              <button onClick={() => handleDelete(ex)} className="px-3 py-1.5 rounded-xl bg-brand-red text-white text-sm active:bg-brand-crimson transition-colors">Delete</button>
+              <button onClick={() => handleDelete(ex)} className="px-3 py-1.5 rounded-xl bg-white text-zinc-900 text-sm active:bg-zinc-200 transition-colors">Delete</button>
             </div>
           </div>
         ) : editMode ? (
@@ -256,7 +256,7 @@ export default function SearchView() {
           {editMode ? (
             <button
               onClick={exitEditMode}
-              className="w-10 text-right text-sm font-semibold text-brand-red active:text-red-400 transition-colors"
+              className="w-10 text-right text-sm font-semibold text-white active:text-zinc-300 transition-colors"
             >
               Done
             </button>

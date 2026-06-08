@@ -392,7 +392,7 @@ function ExerciseArchivesSheet({ exerciseName, onClose }) {
         <div className="overflow-y-auto pb-8 px-4 pt-3">
           {entries === null ? (
             <div className="flex justify-center py-12">
-              <div className="w-5 h-5 rounded-full border-2 border-brand-red border-t-transparent animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
             </div>
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -688,7 +688,7 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0 border-b border-zinc-800/60">
           <span className="text-white font-semibold text-base">Workout Queue</span>
-          <button onClick={handleAdd} className="text-brand-red active:text-red-400 transition-colors text-sm font-semibold">
+          <button onClick={handleAdd} className="text-white active:text-zinc-300 transition-colors text-sm font-semibold">
             Add
           </button>
         </div>
@@ -712,16 +712,16 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
                 key={i}
                 data-row
                 data-row-idx={i}
-                className={`relative overflow-hidden ${isDragging ? 'opacity-30' : 'opacity-100'} ${isDropAbove ? 'border-t-2 border-brand-red' : ''} ${isDropBelow ? 'border-b-2 border-brand-red' : ''}`}
+                className={`relative overflow-hidden ${isDragging ? 'opacity-30' : 'opacity-100'} ${isDropAbove ? 'border-t-2 border-white' : ''} ${isDropBelow ? 'border-b-2 border-white' : ''}`}
                 style={isDragging ? undefined : { transition: 'opacity 0.15s' }}
               >
                 {/* Trash zone — sits behind content, revealed by left-slide */}
-                <div data-trash className="absolute right-0 top-0 h-full w-[72px] bg-brand-red flex items-center justify-center">
+                <div data-trash className="absolute right-0 top-0 h-full w-[72px] bg-white flex items-center justify-center">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleRemove(i) }}
-                    className="w-full h-full flex items-center justify-center active:bg-red-700 transition-colors"
+                    className="w-full h-full flex items-center justify-center active:bg-zinc-200 transition-colors"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-white">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-zinc-900">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                     </svg>
@@ -747,7 +747,7 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
                     {/* Status indicator */}
                     <div className="shrink-0 w-6 h-6 flex items-center justify-center">
                       {isCurrent ? (
-                        <div className="w-2 h-2 rounded-full bg-brand-red" />
+                        <div className="w-2 h-2 rounded-full bg-white" />
                       ) : ratedSets === totalSets && totalSets > 0 ? (
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-emerald-400">
                           <polyline points="20 6 9 17 4 12" />
@@ -769,7 +769,7 @@ function WorkoutQueueTray({ exercises, cardStates, activeExercise, onSelectExerc
 
                     {/* Sets progress */}
                     <div className="shrink-0 text-right">
-                      <span className={`text-xs font-medium tabular-nums ${isCurrent ? 'text-brand-red' : 'text-zinc-600'}`}>
+                      <span className={`text-xs font-medium tabular-nums ${isCurrent ? 'text-white' : 'text-zinc-600'}`}>
                         {ratedSets}/{totalSets}
                       </span>
                       <p className="text-zinc-700 text-xs">sets</p>
@@ -1066,7 +1066,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                   value={currentEx.setsReps}
                   onChange={(e) => updateSetsReps(activeExercise, e.target.value)}
                   onBlur={() => setEditingIdx(null)}
-                  className="bg-zinc-800 text-zinc-300 text-sm rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-brand-red w-44 mb-7"
+                  className="bg-zinc-800 text-zinc-300 text-sm rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-white/50 w-44 mb-7"
                   style={{ fontSize: '16px' }}
                 />
               ) : (
@@ -1091,7 +1091,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                           const newSets = currentState.sets.filter((_, si) => si !== i)
                           updateCardState(activeExercise, { sets: newSets })
                         }}
-                        className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-red/20 text-brand-red active:bg-brand-red active:text-white transition-colors mx-auto"
+                        className="flex items-center justify-center w-7 h-7 rounded-full bg-white/20 text-white active:bg-white active:text-zinc-900 transition-colors mx-auto"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5">
                           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -1107,7 +1107,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                       value={set.reps}
                       onChange={(e) => updateCurrentSet(i, 'reps', e.target.value)}
                       onBlur={() => i === 0 && autofillCurrentFromFirst('reps')}
-                      className="w-14 bg-zinc-800 text-white text-base text-center rounded-full py-2.5 outline-none focus:ring-2 focus:ring-brand-red placeholder-zinc-600"
+                      className="w-14 bg-zinc-800 text-white text-base text-center rounded-full py-2.5 outline-none focus:ring-2 focus:ring-white/50 placeholder-zinc-600"
                       style={{ fontSize: '16px' }}
                     />
                     <div className="flex items-center bg-zinc-800 rounded-full px-4 py-2.5">
@@ -1193,7 +1193,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                     onResume()
                     setShowSummary(true)
                   }}
-                  className="anim-split-right font-semibold text-sm text-white px-5 py-4 rounded-full bg-brand-red active:bg-brand-crimson"
+                  className="anim-split-right font-semibold text-sm text-zinc-900 px-5 py-4 rounded-full bg-white active:bg-zinc-200"
                 >
                   Finish
                 </button>
@@ -1209,7 +1209,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                   }
                   onPause()
                 }}
-                className="anim-merge-in flex items-center gap-2.5 bg-brand-red text-white px-10 py-4 rounded-full active:bg-brand-crimson font-semibold text-base"
+                className="anim-merge-in flex items-center gap-2.5 bg-white text-zinc-900 px-10 py-4 rounded-full active:bg-zinc-200 font-semibold text-base"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                   <rect x="6" y="4" width="4" height="16" rx="1" />
@@ -1283,7 +1283,7 @@ export default function WorkoutSession({ routine, open, onClose, onFinish, timer
                 </button>
                 <button
                   onClick={() => { setShowEditConfirm(false); setEditSetsMode(true) }}
-                  className="flex-1 py-3 rounded-full bg-brand-red text-white text-sm font-semibold active:bg-brand-crimson transition-colors"
+                  className="flex-1 py-3 rounded-full bg-white text-zinc-900 text-sm font-semibold active:bg-zinc-200 transition-colors"
                 >
                   Edit
                 </button>

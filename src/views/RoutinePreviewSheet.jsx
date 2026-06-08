@@ -469,10 +469,8 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
       <div
         className="relative z-10"
         style={{
-          background: 'rgba(18, 18, 18, 0.88)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: `0 0.5px 0 rgba(255, 255, 255, ${0.14 * progress})`,
+          background: `linear-gradient(145deg, rgb(${Math.round(10 + 18 * progress)},${Math.round(10 + 18 * progress)},${Math.round(10 + 18 * progress)}) 0%, #0a0a0a 100%)`,
+          borderBottom: `1px solid rgba(255,255,255,${0.1 * progress})`,
         }}
       >
       {/* Header */}
@@ -528,9 +526,9 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
             bottom: `${playBottom}px`,
             transform: `translateY(${playTranslate}%)`,
           }}
-          className="absolute right-4 w-16 h-16 rounded-full bg-brand-red flex items-center justify-center active:bg-red-800 shadow-lg z-10"
+          className="absolute right-4 w-16 h-16 rounded-full bg-white flex items-center justify-center active:bg-zinc-200 shadow-lg z-10"
         >
-          <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8 ml-0.5">
+          <svg viewBox="0 0 24 24" fill="black" className="w-8 h-8 ml-0.5">
             <polygon points="6,3 20,12 6,21" />
           </svg>
         </button>
@@ -548,14 +546,14 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
         <div className="flex gap-2 px-4 pt-2 pb-4 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setShowAddSheet(true)}
-            className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-white text-sm font-medium active:bg-zinc-700 transition-colors"
+            className="flex-1 py-2.5 rounded-xl bg-white text-zinc-900 text-sm font-medium active:bg-zinc-200 transition-colors"
           >
             + Add
           </button>
           <button
             onClick={() => setEditMode((v) => !v)}
             className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
-              editMode ? 'bg-brand-red text-white' : 'bg-zinc-800 text-white active:bg-zinc-700'
+              editMode ? 'bg-zinc-300 text-zinc-900' : 'bg-white text-zinc-900 active:bg-zinc-200'
             }`}
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
@@ -571,7 +569,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
               setSubtitleInput(subtitle)
               setShowNameSheet(true)
             }}
-            className="shrink-0 px-4 py-2.5 rounded-xl bg-zinc-800 text-white text-sm font-medium active:bg-zinc-700 transition-colors flex items-center justify-center gap-1.5"
+            className="shrink-0 px-4 py-2.5 rounded-xl bg-white text-zinc-900 text-sm font-medium active:bg-zinc-200 transition-colors flex items-center justify-center gap-1.5"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -585,12 +583,12 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
 
       {/* Exercise list — absolute so its viewport never resizes during header collapse */}
       <div ref={scrollRef} onScroll={handleScroll} className="absolute inset-0 overflow-y-auto px-4 pb-24" style={{ paddingTop: `${headerTotalH}px` }}>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pt-3">
           {(() => {
             const items = []
             exercises.forEach((ex, i) => {
               if (editMode && dropIndex === i && dragIndex !== null && dragIndex !== i)
-                items.push(<div key={`drop-${i}`} className="h-1 rounded-full bg-brand-red" />)
+                items.push(<div key={`drop-${i}`} className="h-1 rounded-full bg-white" />)
 
               const isBeingDragged = dragIndex === i
               const hp = editMode ? makeDragHandleProps(i) : null
@@ -599,7 +597,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
                 <div
                   key={ex.name}
                   ref={(el) => (cardRefs.current[i] = el)}
-                  className={`bg-brand-card rounded-2xl px-4 py-10 border border-white/10 transition-transform duration-150 ${isBeingDragged ? 'scale-[1.02] relative z-10' : 'scale-100'}`}
+                  className={`bg-card rounded-2xl px-4 py-10 border border-white/10 transition-transform duration-150 ${isBeingDragged ? 'scale-[1.02] relative z-10' : 'scale-100'}`}
                   style={isBeingDragged ? { filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))' } : undefined}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -623,7 +621,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
                     {editMode ? (
                       <button
                         onClick={() => handleDelete(ex.name)}
-                        className="text-brand-red active:text-red-300 pt-0.5 shrink-0 transition-colors ml-2"
+                        className="text-brand-red active:opacity-60 pt-0.5 shrink-0 transition-colors ml-2"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-5 h-5">
                           <line x1="18" y1="6" x2="6" y2="18" />
@@ -659,7 +657,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
               )
             })
             if (editMode && dropIndex === exercises.length && dragIndex !== null)
-              items.push(<div key="drop-end" className="h-1 rounded-full bg-brand-red" />)
+              items.push(<div key="drop-end" className="h-1 rounded-full bg-white" />)
             return items
           })()}
         </div>
@@ -719,7 +717,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
                     <button
                       onClick={() => handleAddExercise(ex)}
                       className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                        added ? 'bg-zinc-800 text-zinc-500' : 'bg-brand-red/15 text-brand-red active:bg-brand-red/30'
+                        added ? 'bg-zinc-800 text-zinc-500' : 'bg-white/15 text-white active:bg-white/30'
                       }`}
                     >
                       {added ? (
@@ -746,7 +744,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
               placeholder="Search exercises…"
               value={addSearch}
               onChange={e => setAddSearch(e.target.value)}
-              className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-red placeholder:text-zinc-500"
+              className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3 text-base outline-none focus:ring-1 focus:ring-white/50 placeholder:text-zinc-500"
             />
           </div>
           </div>{/* end sheet */}
@@ -781,7 +779,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
               </button>
               <button
                 onClick={confirmAndSwap}
-                className="flex-1 py-3 rounded-xl bg-brand-red text-white text-sm font-semibold active:bg-red-700 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-white text-zinc-900 text-sm font-semibold active:bg-zinc-200 transition-colors"
               >
                 Alternate
               </button>
@@ -844,7 +842,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
                     </div>
                     <button
                       onClick={() => handleSwapExercise(alt)}
-                      className="shrink-0 px-3 py-1.5 rounded-xl bg-brand-red/15 text-brand-red text-sm font-semibold active:bg-brand-red/30 transition-colors"
+                      className="shrink-0 px-3 py-1.5 rounded-xl bg-white/15 text-white text-sm font-semibold active:bg-white/30 transition-colors"
                     >
                       Swap
                     </button>
@@ -886,7 +884,7 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
               <h2 className="text-base font-semibold text-white">Name & Details</h2>
               <button
                 onClick={handleSaveName}
-                className="text-brand-red active:text-red-400 transition-colors text-base font-semibold"
+                className="text-white active:text-zinc-300 transition-colors text-base font-semibold"
               >
                 Save
               </button>
@@ -896,14 +894,14 @@ export default function RoutinePreview({ routine, onBack, onStart }) {
             <input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              className="w-full bg-zinc-900 text-white rounded-xl px-3 py-3 text-base mb-3 outline-none focus:ring-1 focus:ring-brand-red"
+              className="w-full bg-zinc-900 text-white rounded-xl px-3 py-3 text-base mb-3 outline-none focus:ring-1 focus:ring-white/50"
             />
 
             <p className="text-xs text-zinc-500 uppercase tracking-wide mb-1">Description</p>
             <input
               value={subtitleInput}
               onChange={(e) => setSubtitleInput(e.target.value)}
-              className="w-full bg-zinc-900 text-white rounded-xl px-3 py-3 text-base outline-none focus:ring-1 focus:ring-brand-red"
+              className="w-full bg-zinc-900 text-white rounded-xl px-3 py-3 text-base outline-none focus:ring-1 focus:ring-white/50"
             />
           </div>
         </div>,

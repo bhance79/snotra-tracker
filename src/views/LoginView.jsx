@@ -124,12 +124,12 @@ export default function LoginView() {
           style={{ fontSize: '16px' }}
         />
 
-        {error && <p className="text-brand-red text-sm mb-4 text-center">{error}</p>}
+        {error && <p className="text-white text-sm mb-4 text-center">{error}</p>}
 
         <button
           type="submit"
           disabled={!identifier || !password || loading}
-          className="w-full py-4 rounded-2xl bg-brand-red text-white font-semibold text-base active:bg-brand-crimson transition-colors disabled:opacity-40 mb-4"
+          className="w-full py-4 rounded-2xl bg-white text-zinc-900 font-semibold text-base active:bg-zinc-200 transition-colors disabled:opacity-40 mb-4"
         >
           {loading ? '…' : isSignUp ? 'Create Account' : 'Sign In'}
         </button>

@@ -13,8 +13,11 @@ const NAV_ITEMS = [
 export default function BottomNav({ active, onChange, sessionActive = false }) {
   return (
     <nav
-      className="fixed left-4 right-4 h-16 bg-white/8 backdrop-blur-xl rounded-full flex items-center justify-around border border-white/10 z-30"
-      style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      className="fixed left-4 right-4 h-16 backdrop-blur-xl rounded-full flex items-center justify-around border border-white/10 z-30"
+      style={{
+        bottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+        background: 'linear-gradient(145deg, rgba(28,28,28,0.85) 0%, rgba(10,10,10,0.85) 100%)',
+      }}
     >
       {NAV_ITEMS.map(({ id, outline, filled }) => {
         const isActive = active === id
@@ -30,7 +33,7 @@ export default function BottomNav({ active, onChange, sessionActive = false }) {
               aria-label="Record"
             >
               <span className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-                recordActive ? 'bg-brand-red text-white' : 'text-brand-silver'
+                recordActive ? 'bg-white text-brand-black' : 'text-brand-silver'
               }`}>
                 <FontAwesomeIcon icon={outline} className="w-6 h-6" />
               </span>
@@ -46,7 +49,7 @@ export default function BottomNav({ active, onChange, sessionActive = false }) {
             aria-label={id}
           >
             <span className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-              isActive ? 'bg-brand-red text-white' : 'text-brand-silver'
+              isActive ? 'bg-white text-brand-black' : 'text-brand-silver'
             }`}>
               <FontAwesomeIcon icon={isActive ? filled : outline} className="w-6 h-6" />
             </span>

@@ -12,11 +12,13 @@ export default {
       },
       colors: {
         brand: {
-          red: '#D91B24',
+          red: '#FF6165',
+          green: '#4AD968',
+          yellow: '#FEDF43',
           crimson: '#761F21',
           silver: '#C4C4C4',
-          black: '#121212',
-          card: '#242424',
+          black: '#0a0a0a',
+          card: '#0a0a0a',
         },
       },
     },

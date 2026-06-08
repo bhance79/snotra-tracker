@@ -93,7 +93,7 @@ export default function App() {
   if (user === undefined) {
     return (
       <div className="flex items-center justify-center h-screen bg-brand-black">
-        <div className="w-6 h-6 rounded-full border-2 border-brand-red border-t-transparent animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
       </div>
     )
   }

@@ -118,7 +118,7 @@ export default function SaveActivitySheet({ open, routine, exercises, cardStates
         <div className="px-4 pt-3 pb-8 shrink-0">
           <button
             onClick={() => onSave(notes)}
-            className="w-full py-4 rounded-2xl bg-brand-red text-white font-semibold text-base active:bg-brand-crimson transition-colors"
+            className="w-full py-4 rounded-2xl bg-white text-zinc-900 font-semibold text-base active:bg-zinc-200 transition-colors"
           >
             Save Activity
           </button>

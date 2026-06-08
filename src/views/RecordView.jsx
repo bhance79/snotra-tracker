@@ -144,7 +144,7 @@ export default function RecordView({ onSessionStart }) {
                 </button>
                 <button
                   onClick={() => { if (editMode) exitEditMode(); else setEditMode(true) }}
-                  className="text-sm font-semibold text-brand-red active:text-red-400 transition-colors pr-1"
+                  className="text-sm font-semibold text-white active:text-zinc-300 transition-colors pr-1"
                 >
                   {editMode ? 'Done' : 'Edit'}
                 </button>
@@ -173,18 +173,18 @@ export default function RecordView({ onSessionStart }) {
                           </button>
                         )}
                         {isConfirming ? (
-                          <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-brand-card border border-white/10">
+                          <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-card border border-white/10">
                             <span className="text-white text-sm font-medium truncate mr-3">Delete "{displayLabel}"?</span>
                             <div className="flex gap-2 shrink-0">
                               <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm active:bg-zinc-700 transition-colors">Cancel</button>
-                              <button onClick={() => handleDeleteStatic(v.id)} className="px-3 py-1.5 rounded-xl bg-brand-red text-white text-sm active:bg-brand-crimson transition-colors">Delete</button>
+                              <button onClick={() => handleDeleteStatic(v.id)} className="px-3 py-1.5 rounded-xl bg-white text-zinc-900 text-sm active:bg-zinc-200 transition-colors">Delete</button>
                             </div>
                           </div>
                         ) : (
                           <button
                             disabled={editMode}
                             onClick={() => { previewDidNavigateRef.current = true; go(() => setPreviewRoutine(v), 'right') }}
-                            className="flex-1 flex items-center justify-between px-4 py-5 rounded-2xl text-left bg-brand-card border border-white/10 text-white active:bg-brand-black transition-colors disabled:active:bg-brand-card"
+                            className="flex-1 flex items-center justify-between px-4 py-5 rounded-2xl text-left bg-card border border-white/10 text-white active:bg-brand-black transition-colors disabled:active:bg-card"
                           >
                             <div>
                               <span className="text-xl font-semibold leading-tight font-baskerville">{displayLabel}</span>
@@ -214,18 +214,18 @@ export default function RecordView({ onSessionStart }) {
                         </button>
                       )}
                       {isConfirming ? (
-                        <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-brand-card border border-white/10">
+                        <div className="flex-1 flex items-center justify-between px-4 py-3.5 rounded-2xl bg-card border border-white/10">
                           <span className="text-white text-sm font-medium truncate mr-3">Delete "{r.label}"?</span>
                           <div className="flex gap-2 shrink-0">
                             <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm active:bg-zinc-700 transition-colors">Cancel</button>
-                            <button onClick={() => handleDeleteCustom(r.id)} className="px-3 py-1.5 rounded-xl bg-brand-red text-white text-sm active:bg-brand-crimson transition-colors">Delete</button>
+                            <button onClick={() => handleDeleteCustom(r.id)} className="px-3 py-1.5 rounded-xl bg-white text-zinc-900 text-sm active:bg-zinc-200 transition-colors">Delete</button>
                           </div>
                         </div>
                       ) : (
                         <button
                           disabled={editMode}
                           onClick={() => { previewDidNavigateRef.current = true; go(() => setPreviewRoutine(r), 'right') }}
-                          className="flex-1 flex items-center justify-between px-4 py-5 rounded-2xl text-left bg-brand-card border border-white/10 text-white active:bg-brand-black transition-colors disabled:active:bg-brand-card"
+                          className="flex-1 flex items-center justify-between px-4 py-5 rounded-2xl text-left bg-card border border-white/10 text-white active:bg-brand-black transition-colors disabled:active:bg-card"
                         >
                           <div>
                             <span className="text-xl font-semibold leading-tight font-baskerville">{r.label}</span>
@@ -242,7 +242,7 @@ export default function RecordView({ onSessionStart }) {
                 {/* Add Workout — visible in edit mode */}
                 {editMode && (
                   showAddForm ? (
-                    <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-brand-card border border-dashed border-zinc-600 mt-1">
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-dashed border-zinc-600 mt-1">
                       <input
                         ref={addInputRef}
                         type="text"
@@ -254,7 +254,7 @@ export default function RecordView({ onSessionStart }) {
                         style={{ fontSize: '16px' }}
                       />
                       <button onClick={() => { setShowAddForm(false); setAddName('') }} className="text-zinc-500 active:text-white text-sm transition-colors">Cancel</button>
-                      <button onClick={handleAddRoutine} className="text-brand-red active:text-red-400 text-sm font-semibold transition-colors ml-1">Add</button>
+                      <button onClick={handleAddRoutine} className="text-white active:text-zinc-300 text-sm font-semibold transition-colors ml-1">Add</button>
                     </div>
                   ) : (
                     <button
@@ -280,7 +280,7 @@ export default function RecordView({ onSessionStart }) {
                     key={g.id}
                     style={i === 3 ? { marginTop: '0.5rem' } : undefined}
                     onClick={() => go(() => setSelectedGroup(g), 'right')}
-                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-brand-card border border-white/10 text-white active:bg-brand-black transition-colors"
+                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-card border border-white/10 text-white active:bg-brand-black transition-colors"
                   >
                     <div>
                       <div className="flex items-center gap-2">

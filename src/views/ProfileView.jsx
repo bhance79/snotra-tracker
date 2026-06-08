@@ -27,7 +27,7 @@ function EditableRow({ label, value, loading, onSave, validate }) {
   }
 
   return (
-    <div className="bg-brand-card border border-white/10 rounded-2xl px-4 py-4">
+    <div className="bg-card border border-white/10 rounded-2xl px-4 py-4">
       <p className="text-zinc-500 text-xs mb-1">{label}</p>
       {editing ? (
         <div className="flex flex-col gap-2">
@@ -42,18 +42,86 @@ function EditableRow({ label, value, loading, onSave, validate }) {
               style={{ fontSize: '16px' }}
             />
             <button onClick={cancel} className="text-zinc-500 text-sm active:text-white transition-colors">Cancel</button>
-            <button onClick={save} disabled={saving} className="text-brand-red font-semibold text-sm active:opacity-60 transition-opacity">
+            <button onClick={save} disabled={saving} className="text-white font-semibold text-sm active:opacity-60 transition-opacity">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
-          {error && <p className="text-brand-red text-xs">{error}</p>}
+          {error && <p className="text-white text-xs">{error}</p>}
         </div>
       ) : (
         <div className="flex items-center justify-between">
           <span className={`text-base ${loading ? 'text-zinc-600' : value ? 'text-white' : 'text-zinc-500'}`}>
             {loading ? 'Loading…' : value || 'Not set'}
           </span>
-          <button onClick={start} className="text-brand-red text-sm font-semibold active:opacity-60 transition-opacity">
+          <button onClick={start} className="text-zinc-400 text-sm font-semibold active:text-white transition-colors">
+            Edit
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PasswordRow({ email }) {
+  const [editing, setEditing] = useState(false)
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  function cancel() {
+    setEditing(false); setCurrent(''); setNext(''); setConfirm(''); setError(''); setSuccess(false)
+  }
+
+  async function save() {
+    if (next.length < 8) { setError('New password must be at least 8 characters'); return }
+    if (next !== confirm) { setError('Passwords do not match'); return }
+    setSaving(true); setError('')
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: current })
+    if (signInErr) { setSaving(false); setError('Current password is incorrect'); return }
+    const { error: updateErr } = await supabase.auth.updateUser({ password: next })
+    setSaving(false)
+    if (updateErr) { setError(updateErr.message); return }
+    setSuccess(true)
+    setTimeout(cancel, 1500)
+  }
+
+  return (
+    <div className="bg-card border border-white/10 rounded-2xl px-4 py-4">
+      <p className="text-zinc-500 text-xs mb-1">Password</p>
+      {editing ? (
+        <div className="flex flex-col gap-3">
+          {['Current password', 'New password', 'Confirm new password'].map((placeholder, i) => {
+            const val = [current, next, confirm][i]
+            const setter = [setCurrent, setNext, setConfirm][i]
+            return (
+              <input
+                key={placeholder}
+                type="password"
+                autoFocus={i === 0}
+                value={val}
+                onChange={(e) => { setter(e.target.value); setError('') }}
+                placeholder={placeholder}
+                className="w-full bg-transparent text-white text-base outline-none placeholder:text-zinc-600 border-b border-white/10 pb-2"
+                style={{ fontSize: '16px' }}
+              />
+            )
+          })}
+          {error && <p className="text-brand-red text-xs">{error}</p>}
+          {success && <p className="text-brand-green text-xs">Password updated</p>}
+          <div className="flex gap-3 pt-1">
+            <button onClick={cancel} className="text-zinc-500 text-sm active:text-white transition-colors">Cancel</button>
+            <button onClick={save} disabled={saving} className="text-white font-semibold text-sm active:opacity-60 transition-opacity">
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <span className="text-zinc-500 text-base">••••••••</span>
+          <button onClick={() => setEditing(true)} className="text-zinc-400 text-sm font-semibold active:text-white transition-colors">
             Edit
           </button>
         </div>
@@ -148,10 +216,12 @@ export default function ProfileView() {
         />
 
         {/* Email — read only */}
-        <div className="bg-brand-card border border-white/10 rounded-2xl px-4 py-4">
+        <div className="bg-card border border-white/10 rounded-2xl px-4 py-4">
           <p className="text-zinc-500 text-xs mb-1">Email</p>
           <span className="text-white text-base">{email}</span>
         </div>
+
+        <PasswordRow email={email} />
       </div>
 
       <div className="flex-1" />

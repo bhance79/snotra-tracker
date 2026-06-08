@@ -88,7 +88,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSave()}
               placeholder="e.g. Incline Dumbbell Curl"
-              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-red placeholder-zinc-600 border border-zinc-700"
+              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-white/50 placeholder-zinc-600 border border-zinc-700"
               style={{ fontSize: '16px' }}
             />
           </div>
@@ -103,7 +103,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
                 min="1"
                 value={sets}
                 onChange={(e) => setSets(e.target.value)}
-                className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-red border border-zinc-700 text-center"
+                className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-white/50 border border-zinc-700 text-center"
                 style={{ fontSize: '16px' }}
               />
             </div>
@@ -116,7 +116,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
                 min="1"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-red border border-zinc-700 text-center"
+                className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-white/50 border border-zinc-700 text-center"
                 style={{ fontSize: '16px' }}
               />
             </div>
@@ -131,7 +131,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
                   key={cat}
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    category === cat ? 'bg-brand-red text-white' : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
+                    category === cat ? 'bg-white text-zinc-900' : 'bg-zinc-800 text-zinc-400 active:bg-zinc-700'
                   }`}
                 >
                   {cat}
@@ -166,7 +166,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
               value={equipment}
               onChange={(e) => setEquipment(e.target.value)}
               placeholder="e.g. dumbbell, cable, barbell"
-              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-red placeholder-zinc-600 border border-zinc-700"
+              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-white/50 placeholder-zinc-600 border border-zinc-700"
               style={{ fontSize: '16px' }}
             />
           </div>
@@ -176,7 +176,7 @@ export default function ExerciseFormSheet({ exercise, onSave, onClose, actionLab
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            className="w-full py-3.5 rounded-full bg-brand-red text-white text-sm font-semibold active:bg-brand-crimson disabled:opacity-40 transition-colors"
+            className="w-full py-3.5 rounded-full bg-white text-zinc-900 text-sm font-semibold active:bg-zinc-200 disabled:opacity-40 transition-colors"
           >
             {actionLabel}
           </button>

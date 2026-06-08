@@ -109,7 +109,7 @@ function WorkoutCard({ workout, onDelete, onSaved }) {
   )
 
   return (
-    <div className="relative bg-brand-card border border-white/10 rounded-2xl px-4 py-4 mb-4">
+    <div className="relative bg-card border border-white/10 rounded-2xl px-4 py-4 mb-4">
       {/* Dismiss menu on outside tap */}
       {showMenu && (
         <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
@@ -175,7 +175,7 @@ function WorkoutCard({ workout, onDelete, onSaved }) {
                 <p className="text-white font-semibold text-lg leading-tight">{ex.name}</p>
                 <p className="text-zinc-400 text-base mt-0.5">{buildExerciseSummary(ex.sets)}</p>
               </div>
-              <div className={`w-7 h-7 rounded-lg shrink-0 ${lastRatingColor(ex.sets)}`} />
+              <div className={`w-14 h-2.5 rounded-full shrink-0 ${lastRatingColor(ex.sets)}`} />
             </div>
           ))}
         </div>
@@ -194,7 +194,7 @@ function WorkoutCard({ workout, onDelete, onSaved }) {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="px-4 py-2 rounded-xl bg-brand-red text-white text-sm font-semibold active:bg-brand-crimson transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-white text-zinc-900 text-sm font-semibold active:bg-zinc-200 transition-colors disabled:opacity-50"
           >
             {deleting ? '…' : 'Delete'}
           </button>
@@ -224,14 +224,14 @@ export default function RecentView({ refreshKey }) {
 
   return (
     <div className="flex flex-col pb-4">
-      <div className="sticky top-0 bg-brand-black px-4 safe-top">
+      <div className="sticky top-0 z-30 bg-brand-black px-4 safe-top">
         <h1 className="text-2xl font-bold text-white py-4 text-center font-baskerville">Recents</h1>
       </div>
 
       <div className="px-4">
       {loading ? (
         <div className="flex justify-center mt-24">
-          <div className="w-6 h-6 rounded-full border-2 border-brand-red border-t-transparent animate-spin" />
+          <div className="w-6 h-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
         </div>
       ) : workouts.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-24 text-center">

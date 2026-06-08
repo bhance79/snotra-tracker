@@ -67,7 +67,7 @@ export default function RecordSheet({ open, onClose, onSessionStart }) {
                   <button
                     key={v.id}
                     onClick={() => onSessionStart(v)}
-                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-brand-card border border-white/10 text-white active:bg-brand-black transition-colors"
+                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-card border border-white/10 text-white active:bg-brand-black transition-colors"
                   >
                     <div>
                       <span className="text-xl font-semibold leading-tight font-baskerville">{v.label}</span>
@@ -89,7 +89,7 @@ export default function RecordSheet({ open, onClose, onSessionStart }) {
                     key={g.id}
                     style={i === 3 ? { marginTop: '0.5rem' } : undefined}
                     onClick={() => setSelectedGroup(g)}
-                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-brand-card border border-white/10 text-white active:bg-brand-black transition-colors"
+                    className="flex items-center justify-between w-full px-4 py-5 rounded-2xl text-left bg-card border border-white/10 text-white active:bg-brand-black transition-colors"
                   >
                     <div>
                       <div className="flex items-center gap-2">
