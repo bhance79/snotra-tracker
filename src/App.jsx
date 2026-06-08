@@ -50,6 +50,10 @@ export default function App() {
           }
         }
         if (saved?.routine) {
+          // Restore TIMER_KEY from the saved session if it was wiped
+          if (saved.startedAt && !localStorage.getItem(TIMER_KEY)) {
+            localStorage.setItem(TIMER_KEY, saved.startedAt)
+          }
           setSessionRoutine(saved.routine)
           setSessionOpen(true)
         }
@@ -68,6 +72,7 @@ export default function App() {
 
   function handleSessionStart(routine) {
     sessionStorage.removeItem('snotra_preview_routine')
+    localStorage.removeItem(TIMER_KEY)
     setSessionRoutine(routine)
     setSessionOpen(true)
     setTimeout(() => setActiveView('home'), 450)

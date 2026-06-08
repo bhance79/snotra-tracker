@@ -15,15 +15,21 @@ export function clearSavedSession() {
 
 export function useTimer(running, paused = false) {
   const [, tick] = useReducer((x) => x + 1, 0)
+  const prevRunningRef = useRef(false)
 
   useEffect(() => {
     if (!running) {
-      localStorage.removeItem(TIMER_KEY)
+      // Only wipe the key when transitioning from running→stopped (real session end).
+      // On cold start running is false from the start, so prevRunningRef is false too
+      // and we leave any saved TIMER_KEY intact for the restore path.
+      if (prevRunningRef.current) localStorage.removeItem(TIMER_KEY)
+      prevRunningRef.current = false
       tick()
       return
     }
+    prevRunningRef.current = true
     if (paused) {
-      tick() // freeze display at current value
+      tick()
       return
     }
     if (!localStorage.getItem(TIMER_KEY)) {
