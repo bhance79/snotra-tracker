@@ -7,7 +7,9 @@
       "Bash(Test-Path \"e:\\\\Code\\\\Snotra\\\\snotra-tracker\\\\src\\\\views\\\\RecordView.jsx\")",
       "Bash(npx tsc *)",
       "Bash(grep -n \"brand\" tailwind.config.js)",
-      "Bash(grep -n \"brand\" tailwind.config.ts)"
+      "Bash(grep -n \"brand\" tailwind.config.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
