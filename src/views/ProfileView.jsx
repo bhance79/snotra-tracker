@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import {
-  connectStrava, handleStravaCallback, isStravaConnected,
-  disconnectStrava, getStoredAthlete,
-} from '../lib/strava'
 
 function EditableRow({ label, value, loading, onSave, validate }) {
   const [editing, setEditing] = useState(false)
@@ -139,10 +135,6 @@ export default function ProfileView() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
-  const [stravaConnected, setStravaConnected] = useState(isStravaConnected())
-  const [stravaAthlete, setStravaAthlete] = useState(getStoredAthlete())
-  const [stravaError, setStravaError] = useState(null)
-
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -193,37 +185,6 @@ export default function ProfileView() {
     return null
   }
 
-  // Handle Strava OAuth callback (?code=... in URL)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    const error = params.get('error')
-
-    if (error) {
-      setStravaError('Strava authorization was denied.')
-      window.history.replaceState({}, '', window.location.pathname)
-      return
-    }
-    if (!code) return
-
-    window.history.replaceState({}, '', window.location.pathname)
-    const state = params.get('state') ?? ''
-    handleStravaCallback(code, state).then((ok) => {
-      if (ok) {
-        setStravaConnected(true)
-        setStravaAthlete(getStoredAthlete())
-      } else {
-        setStravaError('Failed to connect Strava. Please try again.')
-      }
-    })
-  }, [])
-
-  function handleStravaDisconnect() {
-    disconnectStrava()
-    setStravaConnected(false)
-    setStravaAthlete(null)
-  }
-
   async function handleLogout() {
     await supabase.auth.signOut()
   }
@@ -260,36 +221,6 @@ export default function ProfileView() {
         </div>
 
         <PasswordRow email={email} />
-
-        {/* Strava */}
-        <div className="bg-card border border-white/10 rounded-2xl px-4 py-4">
-          <p className="text-zinc-500 text-xs mb-3">Strava</p>
-          {stravaError && <p className="text-brand-red text-xs mb-2">{stravaError}</p>}
-          {stravaConnected ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#FC4C02] rounded-md flex items-center justify-center shrink-0">
-                  <svg viewBox="0 0 24 24" fill="white" className="w-3.5 h-3.5">
-                    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
-                  </svg>
-                </div>
-                <span className="text-white text-sm font-medium">
-                  {stravaAthlete ? `${stravaAthlete.firstname} ${stravaAthlete.lastname}` : 'Connected'}
-                </span>
-              </div>
-              <button onClick={handleStravaDisconnect} className="text-zinc-400 text-sm font-semibold active:text-white transition-colors">
-                Disconnect
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={connectStrava}
-              className="w-full py-3 rounded-xl bg-[#FC4C02] text-white font-semibold text-sm active:opacity-80 transition-opacity"
-            >
-              Connect with Strava
-            </button>
-          )}
-        </div>
       </div>
 
       <div className="flex-1" />
